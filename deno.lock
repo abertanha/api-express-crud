@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@1": "1.0.15",
     "jsr:@std/internal@^1.0.12": "1.0.12",
+    "npm:dayjs@^1.11.18": "1.11.18",
     "npm:express@^5.1.0": "5.1.0",
     "npm:mongoose@^8.19.2": "8.19.2",
     "npm:morgan@^1.10.1": "1.10.1",
@@ -98,6 +99,9 @@
     },
     "cookie@0.7.2": {
       "integrity": "sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w=="
+    },
+    "dayjs@1.11.18": {
+      "integrity": "sha512-zFBQ7WFRvVRhKcWoUh+ZA1g2HVgUbsZm9sbddh8EC5iv93sui8DVVz1Npvz+r6meo9VKfa8NyLWBsQK1VvIKPA=="
     },
     "debug@2.6.9": {
       "integrity": "sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==",
@@ -556,6 +560,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
+      "npm:dayjs@^1.11.18",
       "npm:express@^5.1.0",
       "npm:mongoose@^8.19.2",
       "npm:morgan@^1.10.1",

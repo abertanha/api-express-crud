@@ -6,6 +6,7 @@
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
+    "dayjs": "npm:dayjs@^1.11.18",
     "express": "npm:express@^5.1.0",
     "mongoose": "npm:mongoose@^8.19.2",
     "morgan": "npm:morgan@^1.10.1",
