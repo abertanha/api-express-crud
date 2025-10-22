@@ -1,8 +1,27 @@
-export function add(a: number, b: number): number {
-  return a + b;
+import express from 'express';
+import { connectDB } from './database/Database.ts';
+import throwlhos from "throwlhos";
+
+
+const app = express();
+
+connectDB();
+
+app.use(express.json());
+
+app.get('/', (_req: any, res: { send: (arg0: string) => void; }) => {
+  res.send("API está rolando...");
+});
+
+const PORT = Deno.env.get("PORT");
+
+if (!PORT) {
+  throwlhos.err_internalServerError({message: "Não foi encontrada a porta para o servidor"});
 }
 
-// Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
-if (import.meta.main) {
-  console.log("Add 2 + 3 =", add(2, 3));
-}
+app.listen(PORT, () => console.log(`Servidor disponível na porta ${PORT}`));
+
+
+
+
+
