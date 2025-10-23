@@ -1,27 +1,39 @@
 import express from 'express';
-import { connectDB } from './database/Database.ts';
-import throwlhos from "throwlhos";
+import morgan from 'morgan';
+import { Env } from './config/Env.ts';
+import { Database } from './database/Database.ts';
 
 
-const app = express();
+const server = async () => { 
+  try {
+    console.log('[Server] Initializing configuration...');
+    console.log(`[Server] Environment set to env.${Env.name}`);
 
-connectDB();
+    console.log('[Server] Connecting to Database...');
+    await Database.initialize();
+    console.log('[Server] Database connection established.');
 
-app.use(express.json());
+    const app = express();
+    app.use(express.json());
+    app.use(morgan('dev'));
+    
 
-app.get('/', (_req: any, res: { send: (arg0: string) => void; }) => {
-  res.send("API está rolando...");
-});
+    app.get('/', (_req, res) => {
+      res.send('API está rolando...');
+    });
 
-const PORT = Deno.env.get("PORT");
+    // TODO: Implementar rotas (userRoute, accountRoute)
+    // TODO: Implementar middleware de tratamento de erros (Responser/Throwlhos)
 
-if (!PORT) {
-  throwlhos.err_internalServerError({message: "Não foi encontrada a porta para o servidor"});
-}
+    const PORT = Env.port;
+    app.listen(PORT, () => {
+      console.log(`[Server] Servidor disponível na porta ${PORT}`);
+    });
+  } catch (error) {
+    console.error('[Server] Failed to start server:');
+    console.error(error);
+    Deno.exit(1);
+  }
+};
 
-app.listen(PORT, () => console.log(`Servidor disponível na porta ${PORT}`));
-
-
-
-
-
+await server();
