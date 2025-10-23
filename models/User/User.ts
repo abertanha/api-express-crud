@@ -55,4 +55,5 @@ class UserSchemaClass extends BaseSchema {
 const UserSchema = new UserSchemaClass().schema;
 UserSchema.loadClass(UserClass);
 
+
 export { UserSchema };
