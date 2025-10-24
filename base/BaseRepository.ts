@@ -1,4 +1,4 @@
-import is from '@zarco/isness';
+import is from '@zarco/isness'
 import {
   Aggregate,
   AggregateOptions,

@@ -1,6 +1,5 @@
-import { env, Env, EnvTypes } from '../../config/Env.ts'
-import { Database, IDatabaseConnection } from '../Database.ts'
-
+import { env, Env, EnvTypes } from '../../config/Env.ts';
+import { Database, IDatabaseConnection } from '../Database.ts';
 
 const databaseConfiguration = env<IDatabaseConnection>({
   [EnvTypes.developmentLike]: { // local, dev, hml
@@ -13,11 +12,15 @@ const databaseConfiguration = env<IDatabaseConnection>({
     database: Env.dbName!,
     username: Env.dbUser!,
   },
-}) as IDatabaseConnection
+}) as IDatabaseConnection;
 
-const database = new Database(databaseConfiguration)
+// inicializa a conexao nomeada, retorna uma promise que 
+// resolve quando o conexao estiver pronta
+export const initializeBankingDB = async () => { 
+  return await Database.initializeNamed('banking', databaseConfiguration);
+};
 
-export const BankingDB = database.connect()
-
-// TODO
-// preciso entender melhor essa camada de definição
+// aqui a conexao deve ser exportada já inicializada
+export const getBankingDB = () => {
+  return Database.getConnection('banking');
+}
