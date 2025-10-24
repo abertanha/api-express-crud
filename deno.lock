@@ -7,6 +7,7 @@
     "jsr:@zarco/switcher@~0.2.4": "0.2.4",
     "npm:dayjs@^1.11.18": "1.11.18",
     "npm:express@^4.18.2": "4.21.2",
+    "npm:mongoose-aggregate-paginate-v2@*": "1.1.4",
     "npm:mongoose-aggregate-paginate-v2@^1.0.7": "1.1.4",
     "npm:mongoose@8.16.1": "8.16.1",
     "npm:morgan@^1.10.1": "1.10.1",
