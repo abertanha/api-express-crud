@@ -6,4 +6,5 @@ export interface IUser extends IBaseInterface {
   password: string;
   cpf: string;
   birthDate: Date;
+  isActive?: boolean;
 }
