@@ -52,7 +52,7 @@ class AccountSchemaClass extends BaseSchema {
         index: true,
       }
     }, {
-      toJSON: { getters: true },// acho que aplica getters ao converter p/JSON
+      toJSON: { getters: true },
       toObject: { getters: true },
     })
   }
