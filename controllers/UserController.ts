@@ -44,7 +44,7 @@ export class UserController {
         birthDate
       });
 
-      return res.status(201).json(userCreated);
+      return res.created(res, userCreated, 'Usuário criado com sucesso');
 
       } catch (error) {
         next(error)
@@ -56,7 +56,7 @@ export class UserController {
 
       const user = await this.userService.findUserById(id);
 
-      return res.status(200).json(user);
+      return res.success(res, user, 'Usuário encontrado');
 
     } catch (error) {
       next(error);
@@ -71,7 +71,7 @@ export class UserController {
 
       const result = await this.userService.findAllUsers(page, limit, includeInactive);
 
-      return res.status(200).json(result);
+      return res.success(res, result, 'Lista de usuários recuperada');
     } catch (error) {
       next(error);
     }
@@ -92,23 +92,37 @@ export class UserController {
         birthDate
       });
 
-      return res.status(200).json(updatedUser);
+      return res.success(res, updatedUser, 'Usuário atualizado com sucesso');
     } catch (error) {
       next(error);
     }
   }
-  // TODO deactiveUser no service primeiro depois acertar aqui.
-  // deactivate = async (req: Request, res: Response, next: NextFunction) => {
-  //   try {
-  //     const { id } = req.params;
-  //     const force = req.query.force === 'true';
+  deactivate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const force = req.query.force === 'true';
 
-  //     await this.userService.deactivateUser(id, force);
+      await this.userService.deactivateUser(id, force);
 
-  //     return res.status(200).json(null);
+      return res.success(res, null, 'Usuário desativado com sucesso');
 
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+    } catch (error) {
+      next(error);
+    }
+  }
+  reactivate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      if (Env.local) {
+        console.info('[User Controller] Reativando usuário:', { id });
+      }
+
+      const reactivatedUser = await this.userService.reactivateUser(id);
+
+      return res.success(res, reactivatedUser, 'Usuário reativado com sucesso');
+    } catch (error) {
+      next(error);
+    }
+  }
 }

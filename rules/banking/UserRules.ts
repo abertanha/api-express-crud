@@ -1,5 +1,5 @@
 import is from '@zarco/isness'
-import { BaseRules, ICheckObj } from '../baseRules.ts'
+import { BaseRules } from '../baseRules.ts'
 import isValidCPF from '../../utilities/Cpf.ts'
 import isValidBirthDate from '../../utilities/BirthDate.ts'
 
@@ -29,7 +29,7 @@ export class UserRules extends BaseRules {
     this.rc.addRule('email', {
       validator: (value: string) => {
         if(is.string(value) &&
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)){
+          is.email(value)){
           return true;
         }
           return false;  

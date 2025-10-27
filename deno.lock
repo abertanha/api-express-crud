@@ -2,9 +2,12 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/assert@1": "1.0.15",
+    "jsr:@std/crypto@^1.0.5": "1.0.5",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@zarco/isness@~0.1.18": "0.1.18",
     "jsr:@zarco/switcher@~0.2.4": "0.2.4",
+    "npm:@types/node@*": "24.2.0",
+    "npm:@types/node@^24.2.0": "24.2.0",
     "npm:dayjs@^1.11.18": "1.11.18",
     "npm:express@^4.18.2": "4.21.2",
     "npm:mongoose-aggregate-paginate-v2@*": "1.1.4",
@@ -22,6 +25,9 @@
         "jsr:@std/internal"
       ]
     },
+    "@std/crypto@1.0.5": {
+      "integrity": "0dcfbb319fe0bba1bd3af904ceb4f948cde1b92979ec1614528380ed308a3b40"
+    },
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
     },
@@ -37,6 +43,12 @@
       "integrity": "sha512-QgA5AySqB27cGTXBFmnpifAi7HxoGUeezwo6p9dI03MuDB6Pp33zgclqVb6oVK3j6I9Vesg0+oojW2XxB59SGg==",
       "dependencies": [
         "sparse-bitfield"
+      ]
+    },
+    "@types/node@24.2.0": {
+      "integrity": "sha512-3xyG3pMCq3oYCNg7/ZP+E1ooTaGB4cG8JWRsqqOYQdbWNY4zbaV0Ennrd7stjiJEFZCaybcIgpTjJWHRfBSIDw==",
+      "dependencies": [
+        "undici-types"
       ]
     },
     "@types/webidl-conversions@7.0.3": {
@@ -547,6 +559,9 @@
         "mime-types"
       ]
     },
+    "undici-types@7.10.0": {
+      "integrity": "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="
+    },
     "unpipe@1.0.0": {
       "integrity": "sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ=="
     },
@@ -573,8 +588,10 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
+      "jsr:@std/crypto@^1.0.5",
       "jsr:@zarco/isness@~0.1.18",
       "jsr:@zarco/switcher@~0.2.4",
+      "npm:@types/node@^24.2.0",
       "npm:dayjs@^1.11.18",
       "npm:express@^4.18.2",
       "npm:mongoose-aggregate-paginate-v2@^1.0.7",

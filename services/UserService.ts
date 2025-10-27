@@ -1,11 +1,10 @@
-
 import { UserRepository } from '../models/User/UserRepository.ts'
-import { Types } from 'mongoose'
 import { throwlhos } from '../global/Throwlhos.ts'
 import { IUser } from '../models/User/IUser.ts'
+import { AccountService } from './AccountService.ts'
+import { randomBytes, scrypt as _scrypt } from "npm:@types/node@^24.2.0";
+import { Buffer } from "node:buffer";
 
-//>>>>>>> TODO MELHORIAS DRY: emailExists, userExists, coisas correlatas
-//>>>>>>> precisam ter um espaço separado no código para evitar repetecos
 
 export interface CreateUserDTO {
   name: string;
@@ -16,7 +15,7 @@ export interface CreateUserDTO {
 }
 
 export interface UserResponseDTO {
-  _id?: Types.ObjectId;
+  _id?: string;
   name: string;
   email: string;
   cpf: string;
@@ -28,9 +27,14 @@ export interface UserResponseDTO {
 
 export class UserService {
   private readonly userRepository: UserRepository;
+  private readonly accountService: AccountService;
 
-  constructor(userRepository: UserRepository = new UserRepository()){
+  constructor(
+    userRepository: UserRepository = new UserRepository(),
+    accountService: AccountService = new AccountService(),
+  ){
     this.userRepository = userRepository;
+    this.accountService = accountService;
   }
 
   async create(data: CreateUserDTO): Promise<UserResponseDTO>{
@@ -40,10 +44,14 @@ export class UserService {
     const cpfExists = await this.userRepository.exists({ cpf: data.cpf })
     if (cpfExists) throw throwlhos.err_conflict('CPF já cadastrado', { cpf: data.cpf });
 
+    const salt = randomBytes(8).toString('hex');
+    const hash = (await _scrypt(data.password, salt, 32)) as Buffer;
+    const saltAndHash = `${salt}.${hash.toString('hex')}`;
+
     const userCreated = await this.userRepository.createOne({
       name: data.name,
       email: data.email,
-      password: data.password, // TODO hash será implementado no serviço
+      password: saltAndHash, 
       cpf: data.cpf,
       birthDate: typeof data.birthDate === 'string' //<-- nao pude usar o isness aqui para
         ? new Date(data.birthDate)                  // para triggerar o narrowing do TS
@@ -68,7 +76,7 @@ export class UserService {
     limit: number = 10,
     includeInactive: boolean = false
   ):Promise<{users: UserResponseDTO[], total: number, totalPages: number }>{
-    const query: any = []
+    const query: any = {};
     if(!includeInactive) query.isActive = true;
 
     const skip = (page - 1) * limit;
@@ -107,31 +115,54 @@ export class UserService {
 
     return this.sanitizeUser(updatedUser!);
   }
-  // >>>>>TODO<<<<<
-  // async deactivateUser(id: string, force: boolean = false): Promise<void> {
-  //   const user = await this.userRepository.findById(id);
-  //   if (!user) {
-  //     throw throwlhos.err_notFound('Usuário não encontrado', { id });
-  //   }
+  async deactivateUser(id: string, force: boolean = false): Promise<void> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw throwlhos.err_notFound('Usuário não encontrado', { id });
+    }
 
-  //   if (!user.isActive) {
-  //     throw throwlhos.err_badRequest('Usuário já está desativado', { id });
-  //   }
+    if (!user.isActive) {
+      throw throwlhos.err_badRequest('Usuário já está desativado', { id });
+    }
 
-  //   // TODO: Verificar saldo em contas (integração com AccountService)
-  //   // if (!force) {
-  //   //   const hasBalance = await accountService.userHasBalance(id);
-  //   //   if (hasBalance) {
-  //   //     throw throwlhos.err_badRequest('Usuário possui saldo em contas');
-  //   //   }
-  //   // }
+    if (!force) {
+      const hasBalance = await this.accountService.userHasBalance(id);
+      if (hasBalance) {
+        const totalBalance = await this.accountService.getUserTotalBalance(id);
+        throw throwlhos.err_badRequest(
+          'Não é possível desativar usuário com saldo em contas. Esvazie as contas primeiro ou use force=true',
+          { 
+            userId: id, 
+            totalBalance,
+            message: `Saldo total: R$ ${totalBalance.toFixed(2)}`
+          }
+        );
+      }
+    }
 
-  //   // Desativa usuário
-  //   await this.userRepository.updateById(id, { isActive: false });
+    await this.accountService.deactivateAllAccountsByUserId(id);
+    console.log(`[UserService] Contas do usuário ${user.name} (${id}) desativadas`);
 
-  //   // TODO: Desativar contas do usuário
-  //   // await accountRepository.deactivateAllByUserId(id);
-  // }
+    await this.userRepository.updateById(id, { isActive: false });
+    console.log(`[UserService] Usuário ${user.name} (${id}) desativado com sucesso`);
+  }
+  async reactivateUser(id: string): Promise<UserResponseDTO> {
+    const user = await this.userRepository.findById(id, { select: '-password' });
+    if (!user) {
+      throw throwlhos.err_notFound('Usuário não encontrado', { id });
+    }
+
+    const reactivatedUser = await this.userRepository.updateById(
+      id, 
+      { isActive: true },
+      { select: '-password' }
+    );
+
+    console.log(`[UserService] Usuário ${user.name} (${id}) reativado com sucesso`);
+    console.log(`[UserService] As contas do usuário permanecem desativadas e devem ser reativadas individualmente`);
+
+    return this.sanitizeUser(reactivatedUser!);
+  }
     
   private sanitizeUser(user: any): UserResponseDTO {
     const userObj = user.toObject ? user.toObject() : user;
@@ -139,5 +170,13 @@ export class UserService {
     const { _password, ...sanitized } = userObj;
 
     return sanitized;
+  }
+  private async isUserActive(userId: string): Promise<boolean> {
+    const user = await this.findUserById(userId);
+
+    if (!user.isActive) {
+      throw throwlhos.err_badRequest('usuário está desativado', { userId });
+    }
+    return user.isActive;
   }
 }

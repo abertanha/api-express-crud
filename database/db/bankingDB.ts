@@ -14,13 +14,10 @@ const databaseConfiguration = env<IDatabaseConnection>({
   },
 }) as IDatabaseConnection;
 
-// inicializa a conexao nomeada, retorna uma promise que 
-// resolve quando o conexao estiver pronta
 export const initializeBankingDB = async () => { 
   return await Database.initializeNamed('banking', databaseConfiguration);
 };
 
-// aqui a conexao deve ser exportada já inicializada
 export const getBankingDB = () => {
   return Database.getConnection('banking');
 }
