@@ -1,7 +1,8 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'npm:express';
 import { UserRules } from '../rules/banking/UserRules.ts';
 import { Env } from '../config/Env.ts';
 import { UserService } from '../services/UserService.ts'
+import responser from 'responser';
 
 export class UserController {
   private readonly userService: UserService;
@@ -17,11 +18,7 @@ export class UserController {
   
   create = async(req: Request, res: Response, next: NextFunction) =>{
     try {
-      const name = req.params.name as string;
-      const email = req.params.email as string;
-      const cpf = req.params.cpf as string;
-      const birthDate = req.params.birthDate as Date;
-      const password = req.params.password as string;
+      const { name, email, cpf, birthDate, password } = req.body;
       
       this.userRules.validate(
         { name, isRequiredField: true },

@@ -2,8 +2,9 @@ import { AccountRepository } from '../models/Account/AccountRepository.ts';
 import { throwlhos } from '../global/Throwlhos.ts';
 import { IAccount } from '../models/Account/IAccount.ts';
 import { UserService } from './UserService.ts';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import is from '@zarco/isness';
+import { TransactionService } from './TransactonService.ts'
 
 
 export interface CreateAccountDTO {
@@ -46,19 +47,20 @@ export interface TransferDTO {
 };
 
 export class AccountService {
-  private readonly userService: UserService;
   private readonly accountRepository: AccountRepository;
+  private readonly transactionService: TransactionService;
 
   constructor(
     accountRepository: AccountRepository = new AccountRepository(),
-    userService: UserService = new UserService()
+    transactionService: TransactionService = new TransactionService(),
   ){
     this.accountRepository = accountRepository;
-    this.userService = userService;
+    this.transactionService = transactionService;
   }
   // crud
   async create(data: CreateAccountDTO): Promise<AccountResponseDTO>{
-    const userExists = await this.userService.findUserById(data.userId.toString());
+    const userService = this.getUserService();
+    const userExists = await userService.findUserById(data.userId.toString());
     if (!userExists) throw throwlhos.err_notFound('Usuário não encontrado'); 
 
     const isUserActivate = userExists.isActive;
@@ -80,15 +82,15 @@ export class AccountService {
       isActive: true
     });
 
-    // TODO: criar registro de transação inicial (se balance > 0)
-    // if (initialBalance > 0) {
-    //   await transactionService.createTransaction({
-    //     accountId: accountCreated._id,
-    //     type: 'credit',
-    //     amount: initialBalance,
-    //     description: 'Depósito inicial'
-    //   });
-    // }
+    
+    if (initialBalance > 0) {
+      await this.transactionService.createTransaction({
+        accountId: accountCreated._id.toString(),
+        type: 'deposit',
+        amount: initialBalance,
+        description: 'Depósito inicial'
+      });
+    }
 
     return this.sanitizeAccount(accountCreated);
   }
@@ -154,7 +156,7 @@ export class AccountService {
     accountId: string,
     amount: number,
     description: string = 'Depósito'
-  ): Promise<AccountResponseDTO> {
+  ): Promise<{ account: AccountResponseDTO; transaction: any }> {
     if (amount <= 0){
       throw throwlhos.err_badRequest(`Valor ${amount} do depósito deve ser positivo.`);
     }
@@ -171,27 +173,29 @@ export class AccountService {
       balance: this.toDecimal128(newBalance),
     });
 
-    // 6. TODO: Registrar transação
-    // await transactionService.createTransaction({
-    //   accountId,
-    //   type: 'credit',
-    //   amount,
-    //   description,
-    //   balanceBefore: currentBalance,
-    //   balanceAfter: newBalance
-    // });
+    
+    const transaction = await this.transactionService.createTransaction({
+      accountId,
+      type: 'deposit',
+      amount,
+      description,
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance
+    });
 
     console.log(`[AccountService] Depósito realizado: R$ ${amount.toFixed(2)} na conta ${account.accNumber}`);
 
-    return this.sanitizeAccount(updatedAccount!);
-
+    return {
+      account: this.sanitizeAccount(updatedAccount!),
+      transaction
+    };
   }
 
    async withdraw(
     accountId: string,
     amount: number,
     description: string = 'Saque'
-  ): Promise<AccountResponseDTO> {
+  ): Promise<{ account: AccountResponseDTO; transaction: any }> {
     if (amount <= 0) {
       throw throwlhos.err_badRequest('Valor do saque deve ser positivo', { amount });
     }
@@ -214,24 +218,30 @@ export class AccountService {
       balance: this.toDecimal128(newBalance),
     });
 
-    // TODO: Registrar transação
-    // await transactionService.createTransaction({
-    //   accountId,
-    //   type: 'debit',
-    //   amount,
-    //   description,
-    //   balanceBefore: currentBalance,
-    //   balanceAfter: newBalance
-    // });
+    const transaction = await this.transactionService.createTransaction({
+      accountId,
+      type: 'withdraw',
+      amount,
+      description,
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance
+    });
 
     console.log(`[AccountService] Saque realizado: R$ ${amount.toFixed(2)} da conta ${account!.accNumber}`);
 
-    return this.sanitizeAccount(updatedAccount!);
+    return {
+      account: this.sanitizeAccount(updatedAccount!),
+      transaction
+    };
   }
 
   async transfer(data: TransferDTO): Promise<{
     fromAccount: AccountResponseDTO;
     toAccount: AccountResponseDTO;
+    transactions: {
+      transferOut: any;
+      transferIn: any;
+    };
   }> {
     const { fromAccountId, toAccountId, amount, description = 'Transferência' } = data;
 
@@ -257,7 +267,6 @@ export class AccountService {
     }
 
     await this.isAccountActive(fromAccount._id.toString());
-
     await this.isAccountActive(toAccount._id.toString());
 
     const fromBalance = this.parseBalance(fromAccount.balance);
@@ -273,46 +282,60 @@ export class AccountService {
     const toBalance = this.parseBalance(toAccount.balance);
     const newToBalance = toBalance + amount;
 
-    // TODO: Usar transação do MongoDB para atomicidade
-    // const session = await mongoose.startSession();
-    // session.startTransaction();
-    // try {
+    let updatedFromAccount;
+    let updatedToAccount;
+    let transferOutTransaction;
+    let transferInTransaction;
 
-    // Atualiza ambas as contas (idealmente em uma transação)
-    const [updatedFromAccount, updatedToAccount] = await Promise.all([
-      this.accountRepository.updateById(fromAccountId, { balance: this.toDecimal128(newFromBalance) }),
-      this.accountRepository.updateById(toAccountId, { balance: this.toDecimal128(newToBalance) }),
-    ]);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      [updatedFromAccount, updatedToAccount] = await Promise.all([
+        this.accountRepository.model.findByIdAndUpdate(
+          fromAccountId,
+          { balance: this.toDecimal128(newFromBalance) },
+          { new: true, session }
+        ),
+        this.accountRepository.model.findByIdAndUpdate(
+          toAccountId,
+          { balance: this.toDecimal128(newToBalance) },
+          { new: true, session }
+        ),
+      ]);
+      
+      [transferOutTransaction, transferInTransaction] = await Promise.all([
+        this.transactionService.createTransaction({
+          accountId: fromAccountId,
+          type: 'transfer_out',
+          amount,
+          description: `${description} para conta ${toAccount.accNumber}`,
+          relatedAccountId: toAccountId,
+          balanceBefore: fromBalance,
+          balanceAfter: newFromBalance,
+          session,
+        }),
+        this.transactionService.createTransaction({
+          accountId: toAccountId,
+          type: 'transfer_in',
+          amount,
+          description: `${description} da conta ${fromAccount.accNumber}`,
+          relatedAccountId: fromAccountId,
+          balanceBefore: toBalance,
+          balanceAfter: newToBalance,
+          session,
+        })
+      ]);
 
-    // TODO: Registrar transações (ambas)
-    // await Promise.all([
-    //   transactionService.createTransaction({
-    //     accountId: fromAccountId,
-    //     type: 'transfer_out',
-    //     amount,
-    //     description: `${description} para conta ${toAccount.accNumber}`,
-    //     relatedAccountId: toAccountId,
-    //     balanceBefore: fromBalance,
-    //     balanceAfter: newFromBalance
-    //   }),
-    //   transactionService.createTransaction({
-    //     accountId: toAccountId,
-    //     type: 'transfer_in',
-    //     amount,
-    //     description: `${description} da conta ${fromAccount.accNumber}`,
-    //     relatedAccountId: fromAccountId,
-    //     balanceBefore: toBalance,
-    //     balanceAfter: newToBalance
-    //   })
-    // ]);
-
-    //   await session.commitTransaction();
-    // } catch (error) {
-    //   await session.abortTransaction();
-    //   throw error;
-    // } finally {
-    //   session.endSession();
-    // }
+      await session.commitTransaction();
+      console.log(`[AccountService] Transação commitada com sucesso`);
+      
+    } catch (error) {
+      await session.abortTransaction();
+      console.error(`[AccountService] Erro na transferência, rollback executado:`, error);
+      throw error;
+    } finally {
+      session.endSession();
+    }
 
     console.log(
       `[AccountService] Transferência realizada: R$ ${amount.toFixed(2)} de ${fromAccount.accNumber} para ${toAccount.accNumber}`
@@ -321,6 +344,10 @@ export class AccountService {
     return {
       fromAccount: this.sanitizeAccount(updatedFromAccount!),
       toAccount: this.sanitizeAccount(updatedToAccount!),
+      transactions: {
+        transferOut: transferOutTransaction,
+        transferIn: transferInTransaction,
+      },
     };
   }
 
@@ -379,13 +406,14 @@ export class AccountService {
   }
 
   async reactivateAccount(accountId: string): Promise<AccountResponseDTO> {
+    const userService = new UserService();
     const account = await this.findAccountById(accountId);
 
     if (account.isActive) {
       throw throwlhos.err_badRequest('Conta já está ativa', { accountId });
     }
 
-    const user = await this.userService.findUserById(account.userId.toString());
+    const user = await userService.findUserById(account.userId.toString());
     if (!user.isActive) {
       throw throwlhos.err_badRequest('Não é possível reativar conta de usuário desativado', {
         accountId,
@@ -432,7 +460,7 @@ export class AccountService {
     }
     return account.isActive;
   }
-  private parseBalance(balance: any): number { // Changed from Decimal128
+  private parseBalance(balance: any): number {
     if (is.number(balance)) return balance;
     if (balance && balance.toString) {
       return parseFloat(balance.toString());
@@ -441,5 +469,8 @@ export class AccountService {
   }
   private toDecimal128(value: number): Types.Decimal128 { 
     return Types.Decimal128.fromString(value.toString());
-  } 
+  }
+  private getUserService(): UserService {
+    return new UserService();
+  }
 }

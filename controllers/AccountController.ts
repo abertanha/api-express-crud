@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'npm:express';
 import { AccountRules } from '../rules/banking/AccountRules.ts';
 import { Env } from '../config/Env.ts';
 import { AccountService } from '../services/AccountService.ts';

@@ -2,8 +2,9 @@ import { UserRepository } from '../models/User/UserRepository.ts'
 import { throwlhos } from '../global/Throwlhos.ts'
 import { IUser } from '../models/User/IUser.ts'
 import { AccountService } from './AccountService.ts'
-import { randomBytes, scrypt as _scrypt } from "npm:@types/node@^24.2.0";
+import { randomBytes } from "node:crypto";
 import { Buffer } from "node:buffer";
+import { scryptSync } from 'node:crypto'
 
 
 export interface CreateUserDTO {
@@ -27,14 +28,11 @@ export interface UserResponseDTO {
 
 export class UserService {
   private readonly userRepository: UserRepository;
-  private readonly accountService: AccountService;
-
+  
   constructor(
-    userRepository: UserRepository = new UserRepository(),
-    accountService: AccountService = new AccountService(),
-  ){
+      userRepository: UserRepository = new UserRepository(),
+   ){
     this.userRepository = userRepository;
-    this.accountService = accountService;
   }
 
   async create(data: CreateUserDTO): Promise<UserResponseDTO>{
@@ -45,7 +43,7 @@ export class UserService {
     if (cpfExists) throw throwlhos.err_conflict('CPF já cadastrado', { cpf: data.cpf });
 
     const salt = randomBytes(8).toString('hex');
-    const hash = (await _scrypt(data.password, salt, 32)) as Buffer;
+    const hash = scryptSync(data.password, salt, 32) as Buffer;
     const saltAndHash = `${salt}.${hash.toString('hex')}`;
 
     const userCreated = await this.userRepository.createOne({
@@ -116,19 +114,20 @@ export class UserService {
     return this.sanitizeUser(updatedUser!);
   }
   async deactivateUser(id: string, force: boolean = false): Promise<void> {
+    const accountService = this.getAccountService();
     const user = await this.userRepository.findById(id);
     if (!user) {
       throw throwlhos.err_notFound('Usuário não encontrado', { id });
     }
-
+    
     if (!user.isActive) {
       throw throwlhos.err_badRequest('Usuário já está desativado', { id });
     }
-
+    
     if (!force) {
-      const hasBalance = await this.accountService.userHasBalance(id);
+      const hasBalance = await accountService.userHasBalance(id);
       if (hasBalance) {
-        const totalBalance = await this.accountService.getUserTotalBalance(id);
+        const totalBalance = await accountService.getUserTotalBalance(id);
         throw throwlhos.err_badRequest(
           'Não é possível desativar usuário com saldo em contas. Esvazie as contas primeiro ou use force=true',
           { 
@@ -140,7 +139,7 @@ export class UserService {
       }
     }
 
-    await this.accountService.deactivateAllAccountsByUserId(id);
+    await accountService.deactivateAllAccountsByUserId(id);
     console.log(`[UserService] Contas do usuário ${user.name} (${id}) desativadas`);
 
     await this.userRepository.updateById(id, { isActive: false });
@@ -171,12 +170,7 @@ export class UserService {
 
     return sanitized;
   }
-  private async isUserActive(userId: string): Promise<boolean> {
-    const user = await this.findUserById(userId);
-
-    if (!user.isActive) {
-      throw throwlhos.err_badRequest('usuário está desativado', { userId });
-    }
-    return user.isActive;
+  private getAccountService(): AccountService {
+    return new AccountService();
   }
 }

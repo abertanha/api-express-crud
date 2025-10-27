@@ -3,16 +3,18 @@ import { throwlhos } from '../global/Throwlhos.ts';
 import { TransactionType } from '../models/Transaction/ITransaction.ts';
 import { Types } from 'mongoose';
 import is from '@zarco/isness'
+import { ClientSession } from 'mongoose'
 
 export interface CreateTransactionDTO {
   accountId: string;
   type: TransactionType;
   amount: number;
   description?: string;
-  balanceBefore: number;
-  balanceAfter: number;
+  balanceBefore?: number;
+  balanceAfter?: number;
   relatedAccountId?: string;
   relatedTransactionId?: string;
+  session?: ClientSession
 }
 
 export interface TransactionResponseDTO {
@@ -37,13 +39,13 @@ export class TransactionService {
   }
 
   async createTransaction(data: CreateTransactionDTO): Promise<TransactionResponseDTO> {
-    const transaction = await this.transactionRepository.createOne({
+    const transactionData = await this.transactionRepository.model.create({
       accountId: new Types.ObjectId(data.accountId),
       type: data.type,
       amount: this.toDecimal128(data.amount),
       description: data.description,
-      balanceBefore: this.toDecimal128(data.balanceBefore),
-      balanceAfter: this.toDecimal128(data.balanceAfter),
+      balanceBefore: this.toDecimal128(data.balanceBefore!),
+      balanceAfter: this.toDecimal128(data.balanceAfter!),
       relatedAccountId: data.relatedAccountId 
         ? new Types.ObjectId(data.relatedAccountId) 
         : undefined,
@@ -51,6 +53,10 @@ export class TransactionService {
         ? new Types.ObjectId(data.relatedTransactionId)
         : undefined,
     });
+
+    const transaction = data.session
+      ? (await this.transactionRepository.model.create([transactionData],{session: data.session }))[0]
+      : await this.transactionRepository.model.create(transactionData);
 
     console.log(
       `[TransactionService] Transação registrada: ${data.type} - R$ ${data.amount.toFixed(2)}`
