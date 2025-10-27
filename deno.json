@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run --allow-env --allow-sys --allow-read --allow-net --watch main.ts",
-    "start": "deno run --allow-env --allow-sys --allow-read --allow-net --watch main.ts",
+    "dev": "deno run --allow-env --allow-sys --allow-read --allow-net --watch server.ts",
+    "start": "deno run --allow-env --allow-sys --allow-read --allow-net --watch server.ts",
     "test": "deno test --allow-env --allow-sys --allow-read --allow-net --watch"
   },
   "imports": {
@@ -12,7 +12,8 @@
     "@zarco/isness": "jsr:@zarco/isness@^0.1.18",
     "@zarco/switcher": "jsr:@zarco/switcher@^0.2.4",
     "dayjs": "npm:dayjs@^1.11.18",
-    "express": "npm:express@^4.18.2",
+    "helmet": "npm:helmet@^8.1.0",
+    "http-status-codes": "npm:http-status-codes@^2.3.0",
     "mongoose": "npm:mongoose@8.16.1",
     "mongoose-aggregate-paginate-v2": "npm:mongoose-aggregate-paginate-v2@^1.0.7",
     "morgan": "npm:morgan@^1.10.1",
