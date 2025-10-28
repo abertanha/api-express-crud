@@ -3,15 +3,20 @@ import { UserRules } from '../rules/banking/UserRules.ts';
 import { Env } from '../config/Env.ts';
 import { UserService } from '../services/UserService.ts'
 import responser from 'responser';
+import { Print } from '../utilities/Print.ts'
 
 export class UserController {
   private readonly userService: UserService;
   private userRules: UserRules;
+  private readonly print: Print;
+
 
   constructor(
     userService: UserService = new UserService(),
-    userRules: UserRules = new UserRules()
+    userRules: UserRules = new UserRules(),
+    print: Print = new Print()
   ) {
+    this.print = print;
     this.userService = userService;
     this.userRules = userRules;
   }
@@ -29,8 +34,8 @@ export class UserController {
       );
 
       if (Env.local){
-        console.info(
-          '[User Controller] Recebido os dados: ', { name, email, cpf });
+        this.print.info(
+          'Recebido os dados: ', { name, email, cpf });
       }
 
       const userCreated = await this.userService.create({
@@ -41,7 +46,7 @@ export class UserController {
         birthDate
       });
 
-      return res.created(res, userCreated, 'Usuário criado com sucesso');
+      return res.send_created('Usuário criado com sucesso', userCreated);
 
       } catch (error) {
         next(error)
@@ -53,7 +58,7 @@ export class UserController {
 
       const user = await this.userService.findUserById(id);
 
-      return res.success(res, user, 'Usuário encontrado');
+      return res.send_ok('Usuário encontrado', user);
 
     } catch (error) {
       next(error);
@@ -68,7 +73,7 @@ export class UserController {
 
       const result = await this.userService.findAllUsers(page, limit, includeInactive);
 
-      return res.success(res, result, 'Lista de usuários recuperada');
+      return res.send_ok('Lista de usuários recuperada',result);
     } catch (error) {
       next(error);
     }
@@ -89,7 +94,7 @@ export class UserController {
         birthDate
       });
 
-      return res.success(res, updatedUser, 'Usuário atualizado com sucesso');
+      return res.send_partialContent('Usuário atualizado com sucesso', updatedUser);
     } catch (error) {
       next(error);
     }
@@ -101,7 +106,7 @@ export class UserController {
 
       await this.userService.deactivateUser(id, force);
 
-      return res.success(res, null, 'Usuário desativado com sucesso');
+      return res.send_noContent('Usuário desativado com sucesso',null);
 
     } catch (error) {
       next(error);
@@ -112,12 +117,12 @@ export class UserController {
       const { id } = req.params;
 
       if (Env.local) {
-        console.info('[User Controller] Reativando usuário:', { id });
+        this.print.info('Reativando usuário:', { id });
       }
 
       const reactivatedUser = await this.userService.reactivateUser(id);
 
-      return res.success(res, reactivatedUser, 'Usuário reativado com sucesso');
+      return res.send_created('Usuário reativado com sucesso',reactivatedUser);
     } catch (error) {
       next(error);
     }

@@ -2,15 +2,19 @@ import { NextFunction, Request, Response } from 'npm:express';
 import { Env } from '../config/Env.ts';
 import { TransactionService } from '../services/TransactonService.ts';
 import { TransactionRules } from '../rules/banking/TransactionRules.ts'
+import { Print } from '../utilities/Print.ts'
 
 export class TransactionController {
   private readonly transactionService: TransactionService;
   private readonly transactionRules: TransactionRules;
+  private readonly print: Print;
 
   constructor(
     transactionService: TransactionService = new TransactionService(),
-    transactionRules: TransactionRules = new TransactionRules()
+    transactionRules: TransactionRules = new TransactionRules(),
+    print: Print = new Print()
   ) {
+    this.print = print;
     this.transactionService = transactionService;
     this.transactionRules = transactionRules;
   }
@@ -22,7 +26,7 @@ export class TransactionController {
       this.transactionRules.validate({ id, isRequiredField: true, rule: 'objectId' });
       const transaction = await this.transactionService.findTransactionById(id);
 
-      return res.success(res, transaction, 'Transação encontrada');
+      return res.send_ok('Transação encontrada',transaction);
     } catch (error) {
       next(error);
     }
@@ -41,7 +45,7 @@ export class TransactionController {
       });
 
       if (Env.local) {
-        console.info('[Transaction Controller] Buscando transações:', { accountId, page, limit });
+        this.print.info('Buscando transações:', { accountId, page, limit });
       }
 
       const result = await this.transactionService.findTransactionsByAccountId(
@@ -50,7 +54,7 @@ export class TransactionController {
         limit
       );
 
-      return res.success(res, result, 'Transações recuperadas');
+      return res.send_ok('Transações recuperadas',result);
     } catch (error) {
       next(error);
     }
@@ -67,15 +71,15 @@ export class TransactionController {
       });
 
       if (Env.local) {
-        console.info('[Transaction Controller] Filtrando por tipo:', { accountId, type });
+        this.print.info('[Transaction Controller] Filtrando por tipo:', { accountId, type });
       }
 
-      const transactions = await this.transactionService.findTransactionsByType(
+      const transactions = await this.transactionService.findTransactionsByAccountAndType(
         accountId,
         type as any
       );
 
-      return res.success(res, transactions, 'Transações filtradas por tipo');
+      return res.send_ok('Transações filtradas por tipo', transactions);
     } catch (error) {
       next(error);
     }
@@ -91,7 +95,7 @@ export class TransactionController {
       });
 
       if (Env.local) {
-        console.info('[Transaction Controller] Buscando transferências:', { accountId1, accountId2 });
+        this.print.info('[Transaction Controller] Buscando transferências:', { accountId1, accountId2 });
       };
 
       const transactions = await this.transactionService.findTransfersBetweenAccounts(
@@ -99,7 +103,7 @@ export class TransactionController {
         accountId2
       );
 
-      return res.success(res, transactions, 'Transferências entre contas recuperadas');
+      return res.send_ok('Transferências entre contas recuperadas', transactions);
     } catch (error) {
       next(error);
     }
@@ -112,12 +116,12 @@ export class TransactionController {
       this.transactionRules.validate({ accountId, isRequiredField: true, rule: 'objectId' });
 
       if (Env.local) {
-        console.info('[Transaction Controller] Buscando estatísticas:', { accountId });
+        this.print.info('[Transaction Controller] Buscando estatísticas:', { accountId });
       }
 
       const stats = await this.transactionService.getAccountStats(accountId);
 
-      return res.success(res, stats, 'Estatísticas recuperadas');
+      return res.send_ok('Estatísticas recuperadas',stats);
     } catch (error) {
       next(error);
     }

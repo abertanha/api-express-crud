@@ -5,6 +5,7 @@ import { AccountService } from './AccountService.ts'
 import { randomBytes } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { scryptSync } from 'node:crypto'
+import { Print } from '../utilities/Print.ts'
 
 
 export interface CreateUserDTO {
@@ -28,11 +29,14 @@ export interface UserResponseDTO {
 
 export class UserService {
   private readonly userRepository: UserRepository;
+  private readonly print: Print;
   
   constructor(
       userRepository: UserRepository = new UserRepository(),
+      print: Print = new Print()
    ){
     this.userRepository = userRepository;
+    this.print = print;
   }
 
   async create(data: CreateUserDTO): Promise<UserResponseDTO>{
@@ -70,27 +74,32 @@ export class UserService {
     return this.sanitizeUser(user);
   }
   async findAllUsers (
-    page: number = 1,
-    limit: number = 10,
+    page: number,
+    limit: number,
     includeInactive: boolean = false
-  ):Promise<{users: UserResponseDTO[], total: number, totalPages: number }>{
-    const query: any = {};
-    if(!includeInactive) query.isActive = true;
+  ) {
+    const $match: any = {};
+    if (!includeInactive) {
+      $match.isActive = true
+    }
 
-    const skip = (page - 1) * limit;
-    const users = await this.userRepository.findMany(query, {
-      limit,
-      skip,
-      select: '-password'
-    });
+    const aggregate = [
+      { $match },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          cpf: 1,
+          birthDate: 1,
+          active: 1,
+          createdAt: 1,
+        },
+      },
+    ]
 
-    const total = await this.userRepository.countDocuments(query);
-
-    return {
-      users: users.map(u => this.sanitizeUser(u)),
-      total,
-      totalPages: Math.ceil(total / limit)
-    };
+    return await this.userRepository.paginate(aggregate, {
+      paginate: { page, limit },
+    })
   }
   async updateUser(
     id: string,
@@ -140,10 +149,10 @@ export class UserService {
     }
 
     await accountService.deactivateAllAccountsByUserId(id);
-    console.log(`[UserService] Contas do usuário ${user.name} (${id}) desativadas`);
+    this.print.sucess(`Contas do usuário ${user.name} (${id}) desativadas`);
 
     await this.userRepository.updateById(id, { isActive: false });
-    console.log(`[UserService] Usuário ${user.name} (${id}) desativado com sucesso`);
+    this.print.sucess(`Usuário ${user.name} (${id}) desativado com sucesso`);
   }
   async reactivateUser(id: string): Promise<UserResponseDTO> {
     const user = await this.userRepository.findById(id, { select: '-password' });
@@ -157,8 +166,8 @@ export class UserService {
       { select: '-password' }
     );
 
-    console.log(`[UserService] Usuário ${user.name} (${id}) reativado com sucesso`);
-    console.log(`[UserService] As contas do usuário permanecem desativadas e devem ser reativadas individualmente`);
+    this.print.sucess(`Usuário ${user.name} (${id}) reativado com sucesso`);
+    this.print.info(`As contas do usuário permanecem desativadas e devem ser reativadas individualmente`);
 
     return this.sanitizeUser(reactivatedUser!);
   }

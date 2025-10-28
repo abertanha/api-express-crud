@@ -2,15 +2,19 @@ import { NextFunction, Request, Response } from 'npm:express';
 import { AccountRules } from '../rules/banking/AccountRules.ts';
 import { Env } from '../config/Env.ts';
 import { AccountService } from '../services/AccountService.ts';
+import { Print } from '../utilities/Print.ts'
 
 export class AccountController {
   private readonly accountService: AccountService;
   private readonly accountRules: AccountRules;
+  private readonly print: Print;
 
   constructor(
     accountService: AccountService = new AccountService(),
-    accountRules: AccountRules = new AccountRules()
+    accountRules: AccountRules = new AccountRules(),
+    print: Print = new Print()
   ) {
+    this.print = print;
     this.accountService = accountService;
     this.accountRules = accountRules;
   }
@@ -26,7 +30,7 @@ export class AccountController {
       );
 
       if (Env.local) {
-        console.info('[Account Controller] Criando conta:', { userId, type, balance });
+        this.print.info('[Account Controller] Criando conta:', { userId, type, balance });
       }
 
       const accountCreated = await this.accountService.create({
@@ -35,7 +39,7 @@ export class AccountController {
         balance,
       });
 
-      return res.created(res, accountCreated, 'Conta criada com sucesso');
+      return res.send_created('Conta criada com sucesso', accountCreated);
     } catch (error) {
       next(error);
     }
@@ -47,7 +51,7 @@ export class AccountController {
 
       const account = await this.accountService.findAccountById(id);
 
-      return res.success(res, account, 'Conta encontrada');
+      return res.send_ok('Conta encontrada',account);
     } catch (error) {
       next(error);
     }
@@ -61,7 +65,7 @@ export class AccountController {
 
       const result = await this.accountService.findAllAccounts(page, limit, includeInactive);
 
-      return res.success(res, result, 'Lista de contas recuperada');
+      return res.send_ok('Lista de contas recuperada',result);
     } catch (error) {
       next(error);
     }
@@ -74,7 +78,7 @@ export class AccountController {
 
       const accounts = await this.accountService.findAccountsByUserId(userId, includeInactive);
 
-      return res.success(res, accounts, 'Contas do usuário recuperadas');
+      return res.send_ok('Contas do usuário recuperadas', accounts);
     } catch (error) {
       next(error);
     }
@@ -93,7 +97,7 @@ export class AccountController {
         balance,
       });
 
-      return res.success(res, updatedAccount, 'Conta atualizada com sucesso');
+      return res.send_partialContent('Conta atualizada com sucesso', updatedAccount);
     } catch (error) {
       next(error);
     }
@@ -109,12 +113,12 @@ export class AccountController {
       this.accountRules.validate({ amount, isRequiredField: true });
 
       if (Env.local) {
-        console.info('[Account Controller] Depósito:', { accountId: id, amount });
+        this.print.info('[Account Controller] Depósito:', { accountId: id, amount });
       }
 
       const updatedAccount = await this.accountService.deposit(id, amount, description);
 
-      return res.success(res, updatedAccount, 'Depósito realizado com sucesso');
+      return res.send_ok('Depósito realizado com sucesso', updatedAccount);
     } catch (error) {
       next(error);
     }
@@ -128,12 +132,12 @@ export class AccountController {
       this.accountRules.validate({ amount, isRequiredField: true });
 
       if (Env.local) {
-        console.info('[Account Controller] Saque:', { accountId: id, amount });
+        this.print.info('[Account Controller] Saque:', { accountId: id, amount });
       }
 
       const updatedAccount = await this.accountService.withdraw(id, amount, description);
 
-      return res.success(res, updatedAccount, 'Saque realizado com sucesso');
+      return res.send_ok('Saque realizado com sucesso', updatedAccount);
     } catch (error) {
       next(error);
     }
@@ -150,7 +154,7 @@ export class AccountController {
       );
 
       if (Env.local) {
-        console.info('[Account Controller] Transferência:', {
+        this.print.info('[Account Controller] Transferência:', {
           fromAccountId,
           toAccountId,
           amount,
@@ -164,7 +168,8 @@ export class AccountController {
         description,
       });
 
-      return res.success(res, result, 'Transferência realizada com sucesso');
+      return res.send_ok('Transferência realizada com sucesso',result);
+
     } catch (error) {
       next(error);
     }
@@ -176,7 +181,7 @@ export class AccountController {
 
       const balance = await this.accountService.getBalance(id);
 
-      return res.success(res, { balance }, 'Saldo consultado');
+      return res.send_ok('Saldo consultado',{ balance });
     } catch (error) {
       next(error);
     }
@@ -188,7 +193,7 @@ export class AccountController {
 
       const totalBalance = await this.accountService.getUserTotalBalance(userId);
 
-      return res.success(res, { totalBalance }, 'Saldo consultado');
+      return res.send_ok('Saldo consultado',  { totalBalance });
     } catch (error) {
       next(error);
     }
@@ -203,7 +208,7 @@ export class AccountController {
 
       await this.accountService.deactivateAccount(id, force);
 
-      return res.success(res,null,'Conta desativada com sucesso' );
+      return res.send_noContent('Conta desativada com sucesso', null);
     } catch (error) {
       next(error);
     }
@@ -215,7 +220,7 @@ export class AccountController {
 
       const reactivatedAccount = await this.accountService.reactivateAccount(id);
 
-      return res.success(res, reactivatedAccount, 'Conta reativada com sucesso.');
+      return res.send_created('Conta reativada com sucesso.', reactivatedAccount);
     } catch (error) {
       next(error);
     }

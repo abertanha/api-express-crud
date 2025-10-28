@@ -5,6 +5,7 @@ import { UserService } from './UserService.ts';
 import mongoose, { Types } from 'mongoose';
 import is from '@zarco/isness';
 import { TransactionService } from './TransactonService.ts'
+import { Print } from '../utilities/Print.ts'
 
 
 export interface CreateAccountDTO {
@@ -49,11 +50,14 @@ export interface TransferDTO {
 export class AccountService {
   private readonly accountRepository: AccountRepository;
   private readonly transactionService: TransactionService;
+  private readonly print: Print;
 
   constructor(
     accountRepository: AccountRepository = new AccountRepository(),
     transactionService: TransactionService = new TransactionService(),
+    print: Print = new Print()
   ){
+    this.print = print;
     this.accountRepository = accountRepository;
     this.transactionService = transactionService;
   }
@@ -106,23 +110,29 @@ export class AccountService {
     page: number = 1,
     limit: number = 10,
     includeInactive: boolean = false
-  ):Promise<{accounts: AccountResponseDTO[], total: number, totalPages: number }>{
-    const query: any = {};
-    if(!includeInactive) query.isActive = true;
+  ) {
+    const $match: any = {};
+    if (!includeInactive) {
+      $match.isActive = true
+    }
 
-    const skip = (page - 1) * limit;
-    const accounts = await this.accountRepository.findMany(query, {
-      limit,
-      skip,
-    });
+    const aggregate = [
+      { $match },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          cpf: 1,
+          birthDate: 1,
+          active: 1,
+          createdAt: 1,
+        },
+      },
+    ]
 
-    const total = await this.accountRepository.countDocuments(query);
-
-    return {
-      accounts: accounts.map(a => this.sanitizeAccount(a)),
-      total,
-      totalPages: Math.ceil(total / limit)
-    };
+    return await this.accountRepository.paginate(aggregate, {
+      paginate: { page, limit },
+    })
   }
 
   async findAccountsByUserId(
@@ -183,7 +193,7 @@ export class AccountService {
       balanceAfter: newBalance
     });
 
-    console.log(`[AccountService] Depósito realizado: R$ ${amount.toFixed(2)} na conta ${account.accNumber}`);
+    this.print.sucess(` Depósito realizado: R$ ${amount.toFixed(2)} na conta ${account.accNumber}`);
 
     return {
       account: this.sanitizeAccount(updatedAccount!),
@@ -227,7 +237,7 @@ export class AccountService {
       balanceAfter: newBalance
     });
 
-    console.log(`[AccountService] Saque realizado: R$ ${amount.toFixed(2)} da conta ${account!.accNumber}`);
+    this.print.sucess(` Saque realizado: R$ ${amount.toFixed(2)} da conta ${account!.accNumber}`);
 
     return {
       account: this.sanitizeAccount(updatedAccount!),
@@ -327,18 +337,18 @@ export class AccountService {
       ]);
 
       await session.commitTransaction();
-      console.log(`[AccountService] Transação commitada com sucesso`);
+      this.print.sucess(` Transação commitada com sucesso`);
       
     } catch (error) {
       await session.abortTransaction();
-      console.error(`[AccountService] Erro na transferência, rollback executado:`, error);
+      this.print.error(` Erro na transferência, rollback executado:`, error);
       throw error;
     } finally {
       session.endSession();
     }
 
-    console.log(
-      `[AccountService] Transferência realizada: R$ ${amount.toFixed(2)} de ${fromAccount.accNumber} para ${toAccount.accNumber}`
+    this.print.sucess(
+      ` Transferência realizada: R$ ${amount.toFixed(2)} de ${fromAccount.accNumber} para ${toAccount.accNumber}`
     );
 
     return {
@@ -402,7 +412,7 @@ export class AccountService {
 
     await this.accountRepository.updateById(accountId, { isActive: false });
 
-    console.log(`[AccountService] Conta ${account.accNumber} desativada`);
+    this.print.sucess(` Conta ${account.accNumber} desativada`);
   }
 
   async reactivateAccount(accountId: string): Promise<AccountResponseDTO> {
@@ -423,7 +433,7 @@ export class AccountService {
 
     const reactivatedAccount = await this.accountRepository.updateById(accountId, { isActive: true });
 
-    console.log(`[AccountService] Conta ${account.accNumber} reativada`);
+    this.print.sucess(`Conta ${account.accNumber} reativada`);
 
     return this.sanitizeAccount(reactivatedAccount!);
   }
@@ -434,7 +444,7 @@ export class AccountService {
       { isActive: false }
     );
 
-    console.log(`[AccountService] ${result.modifiedCount} contas do usuário ${userId} desativadas`);
+    this.print.sucess(`${result.modifiedCount} contas do usuário ${userId} desativadas`);
   }
 
   private sanitizeAccount(account: any): AccountResponseDTO {

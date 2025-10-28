@@ -1,9 +1,9 @@
 import { TransactionRepository } from '../models/Transaction/TransactionRepository.ts';
-import { throwlhos } from '../global/Throwlhos.ts';
 import { TransactionType } from '../models/Transaction/ITransaction.ts';
 import { Types } from 'mongoose';
 import is from '@zarco/isness'
 import { ClientSession } from 'mongoose'
+import { Print } from '../utilities/Print.ts'
 
 export interface CreateTransactionDTO {
   accountId: string;
@@ -33,8 +33,13 @@ export interface TransactionResponseDTO {
 
 export class TransactionService {
   private readonly transactionRepository: TransactionRepository;
+  private readonly print: Print;
 
-  constructor(transactionRepository: TransactionRepository = new TransactionRepository()) {
+  constructor(
+    transactionRepository: TransactionRepository = new TransactionRepository(),
+    print: Print = new Print()
+  ) {
+    this.print = print;
     this.transactionRepository = transactionRepository;
   }
 
@@ -58,49 +63,51 @@ export class TransactionService {
       ? (await this.transactionRepository.model.create([transactionData],{session: data.session }))[0]
       : await this.transactionRepository.model.create(transactionData);
 
-    console.log(
-      `[TransactionService] Transação registrada: ${data.type} - R$ ${data.amount.toFixed(2)}`
+    this.print.sucess(
+      `Transação registrada: ${data.type} - R$ ${data.amount.toFixed(2)}`
     );
 
     return this.sanitizeTransaction(transaction);
   }
 
-  async findTransactionById(id: string): Promise<TransactionResponseDTO> {
-    const transaction = await this.transactionRepository.findById(id);
-
-    if (!transaction) {
-      throw throwlhos.err_notFound('Transação não encontrada', { id });
-    }
-
-    return this.sanitizeTransaction(transaction);
+  async findTransactionById(id: string) {
+    return await this.transactionRepository
+    .findById(id)
+    .lean()
+    .exec()
   }
 
   async findTransactionsByAccountId(
     accountId: string,
     page: number = 1,
     limit: number = 20
-  ): Promise<{
-    transactions: TransactionResponseDTO[];
-    total: number;
-    totalPages: number;
-  }> {
-    const skip = (page - 1) * limit;
+  ) {
+    const skip = (page - 1) * limit
+  
+    const query = { accountId }
 
-    const transactions = await this.transactionRepository.findByAccountId(accountId, {
-      limit,
-      skip,
-    });
+    const transactions = await this.transactionRepository
+      .findMany(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec()
 
-    const total = await this.transactionRepository.countDocuments({ accountId });
+    const total = await this.transactionRepository.countDocuments(query)
 
     return {
-      transactions: transactions.map((t) => this.sanitizeTransaction(t)),
-      total,
+      docs: transactions,
+      totalDocs: total,
+      limit,
+      page,
       totalPages: Math.ceil(total / limit),
-    };
+      hasNextPage: page < Math.ceil(total / limit),
+      hasPrevPage: page > 1,
+    }
   }
 
-  async findTransactionsByType(
+  async findTransactionsByAccountAndType(
     accountId: string,
     type: TransactionType
   ): Promise<TransactionResponseDTO[]> {
