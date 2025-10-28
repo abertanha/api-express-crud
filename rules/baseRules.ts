@@ -1,6 +1,7 @@
 import requestCheck from 'request-check';
 import npmTthrowlhos, { IThrowlhos } from 'throwlhos';
 import is from '@zarco/isness';
+import { Print } from '../utilities/Print.ts'
 
 const throwlhos = npmTthrowlhos.default;
 
@@ -25,8 +26,10 @@ export interface BaseRulesConfig {
 export class BaseRules {
   protected rc
   private config: BaseRulesConfig;
+  private readonly print: Print;
 
   constructor(config:BaseRulesConfig = {}) {
+    this.print = new Print();
     this.config = { 
       requiredMessage:
        'Este campo é obrigatório',
@@ -56,7 +59,7 @@ export class BaseRules {
         )
       }
     } catch (err: any) {
-      console.warn(err)
+      this.print.warn(err);
       throw {
         code: 422,
         message: err.message ?? err,

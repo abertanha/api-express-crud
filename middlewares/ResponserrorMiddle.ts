@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'npm:express'
 import HttpStatus from 'npm:http-status-codes'
+import { Print } from '../utilities/Print.ts'
 
 const camelCase = (str: string) => 
   str.toLowerCase().replace(/(\_\w)/g, (c) => c[1].toUpperCase())
@@ -18,6 +19,7 @@ type IResponserrorObject = {
 }
 
 export class Responserror {
+  private readonly print: Print;
   private preFunctions: Function[] = []
   private posFunctions: Function[] = []
 
@@ -36,6 +38,7 @@ export class Responserror {
   }
 
   constructor(options: IOptions = { promptErrors: false }) {
+    this.print = new Print();
     this.options = options
     this.setMapStatusByCode()
   }
@@ -66,8 +69,8 @@ export class Responserror {
     try {
       return HttpStatus.getStatusText(code)
     } catch (e: unknown) {
-      console.warn(e)
-      return undefined
+      this.print.warn(e as unknown as string);
+      return undefined;
     }
   }
 
@@ -167,7 +170,7 @@ export class Responserror {
       this.options.promptErrors === true ||
       (typeof this.options.promptErrors === 'function' && this.options.promptErrors())
     ) {
-      console.error('Error:', error)
+      this.print.error('Error:', error)
     }
 
     this.posFunctions.forEach((fn) => fn.apply(null))

@@ -2,6 +2,8 @@ import { IUser } from "./IUser.ts";
 import { BaseSchema } from "../../base/BaseSchema.ts";
 import isValidCPF from "../../utilities/Cpf.ts";
 import isValidBirthDate from "../../utilities/BirthDate.ts";
+import aggregatePaginate from 'npm:mongoose-aggregate-paginate-v2'
+import { boolean } from '@zarco/isness'
 
 export const UserRefs = [{
                 ref: 'userId',
@@ -52,12 +54,18 @@ class UserSchemaClass extends BaseSchema {
         },
         required: [true, 'O aniversário precisa ser informado'] 
       },
+      isActive: {
+        type: Boolean,
+        default: true,
+        index: true,
+      },
     })
   } 
 }
 
 const UserSchema = new UserSchemaClass().schema;
 UserSchema.loadClass(UserClass);
+UserSchema.plugin(aggregatePaginate);
 
 
 export { UserSchema };

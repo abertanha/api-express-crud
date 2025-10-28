@@ -2,6 +2,9 @@ import { Schema } from 'mongoose'
 import { IAccount } from './IAccount.ts'
 import { BaseSchema } from '../../base/BaseSchema.ts'
 import { getNextAccountNumber } from '../shared/counterSchema.ts'
+import { Print } from '../../utilities/Print.ts'
+
+const print = new Print();
 
 class AccountClass implements IAccount {
   accNumber: IAccount['accNumber'];
@@ -67,12 +70,12 @@ AccountSchema.index({ type: 1, isActive: 1 });
 
 AccountSchema.pre('save', async function (next) {
   if (this.isNew && !this.accNumber) {
-    try{
+    try {
       this.accNumber = await getNextAccountNumber();
-      console.log(`[Account] No. da conta geado: ${this.accNumber}`);
+      print.sucess(`No. da conta gerado: ${this.accNumber}`);
       next();
-    } catch (error) {
-      console.error('[Account] Erro ao gerar no. de conta');
+    } catch (error: unknown) {
+      print.error('Erro ao gerar no. de conta');
       next(error as Error);
     }
   } else {

@@ -2,25 +2,39 @@ import { Env } from './config/Env.ts';
 import { initializeBankingDB } from './database/db/bankingDB.ts';
 import { Database } from './database/Database.ts';
 import { ApiEnvironment } from './environments/ApiEnvironment.ts';
-
+import { DevelopmentEnvironment } from './environments/DevelopmentEnvironment.ts'
+import { Print } from './utilities/Print.ts'
 
 const server = async () => { 
+  const print = new Print();
   try {
-    console.log('[Server] Initializing configuration...');
-    console.log(`[Server] Environment set to env.${Env.name}`);
-
-    console.log('[Server] Connecting to Database...');
-    await initializeBankingDB();
-    console.log('[Server] Database connection established.');
+    print.sucess('Initializing configuration...');
+    print.info(`Environment set to env.${Env.name}`);
+    print.info(`Is Devlopment: ${Env.isDevLike}`);
+    print.info(`Is Production: ${Env.isProductionLike}`);
 
     
-    const apiEnv = new ApiEnvironment();
-    apiEnv.run();
+
+    print.info('Connecting to Database...');
+    await initializeBankingDB();
+    print.sucess('Database connection established.');
+
+    
+    if (Env.isProductionLike) {
+      print.info('Starting production environment...');
+      const apiEnv = new ApiEnvironment();
+      apiEnv.run();
+      
+    } else if (Env.isDevLike) {
+      print.info('Starting development environment...');
+      const devEnv = new DevelopmentEnvironment();
+      devEnv.run();
+    }
     
     const shutdown = async () => {
-      console.log('\n[Server] Graceful shutdown initiated...');
+      print.info('\nGraceful shutdown initiated...');
       await Database.closeAllConnections();
-      console.log('[Server] Shutdown complete.');
+      print.sucess('Shutdown complete.');
       Deno.exit(0);
     }
 
@@ -28,8 +42,8 @@ const server = async () => {
     Deno.addSignalListener('SIGTERM', shutdown);
 
   } catch (error) {
-    console.error('[Server] Failed to start server:');
-    console.error(error);
+    print.error('Failed to start server:');
+    print.error(error as unknown as string);
     Deno.exit(1);
   }
 };

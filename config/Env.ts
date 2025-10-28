@@ -1,14 +1,14 @@
 import { load } from '@std/dotenv'
 import is from '@zarco/isness'
+import { throwlhos } from '../global/Throwlhos.ts'
 
-// na minha aplicação por enquanto name pode ser const.
 const name = Deno.env.get('ENV') ?? 'local';
 
 export const EnvironmentName = {
 	local: 'local',
 	dev: 'dev',
 	hml: 'hml',
-	server: 'server', // server seria produção?
+	server: 'server',
 } as const;
 
 if (Deno.env.get('ENV') === undefined) {
@@ -39,7 +39,12 @@ export class Env {
 	}
 
 	static get port() {
-		return Number(Deno.env.get('PORT') ?? '');
+		const port = Deno.env.get('PORT');
+		if(!port) throw throwlhos.err_internalServerError('PORT não foi definida nas variáveis de ambiente!');
+		const portNumber = Number(port);
+		if(isNaN(portNumber)) throw throwlhos.err_internalServerError(`PORT inválida: ${port}`);
+		
+		return portNumber;	
 	}
 
 	static get dev() {

@@ -28,9 +28,6 @@ export class ApiEnvironment extends AbstractEnvironment {
     apiServer.use('/api/accounts', AccountRouter);
     apiServer.use('/api/transactions', TransactionRouter);
 
-    // apiServer.use(UserRouter);
-    // apiServer.use(TransactionRouter);
-    // apiServer.use(AccountRouter);
     const responseError = new Responserror({ promptErrors: Env.local });
     apiServer.use(responseError.errorHandler);
     
