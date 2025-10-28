@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'npm:express';
-import { UserRules } from '../rules/banking/UserRules.ts';
-import { Env } from '../config/Env.ts';
-import { UserService } from '../services/UserService.ts'
+import { UserRules } from './UserRules.ts';
+import { Env } from '../../config/Env.ts';
+import { UserService } from '../../services/UserService.ts'
 import responser from 'responser';
-import { Print } from '../utilities/Print.ts'
+import { Print } from '../../utilities/Print.ts'
 
 export class UserController {
   private readonly userService: UserService;
@@ -52,7 +52,7 @@ export class UserController {
         next(error)
     }
   }
-  findUserById = async (req: Request, res: Response, next: NextFunction) => {
+  findById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
 
@@ -65,10 +65,10 @@ export class UserController {
     }
   }
 
-  findAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+  findAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const { page, limit } = req.pagination!
+      
       const includeInactive = req.query.includeInactive === 'true';
 
       const result = await this.userService.findAllUsers(page, limit, includeInactive);

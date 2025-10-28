@@ -1,5 +1,5 @@
 import is from '@zarco/isness'
-import { BaseRules } from '../baseRules.ts'
+import { BaseRules } from '../../base/BaseRules.ts'
 import isValidCPF from '../../utilities/Cpf.ts'
 import isValidBirthDate from '../../utilities/BirthDate.ts'
 

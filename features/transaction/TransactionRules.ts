@@ -1,5 +1,5 @@
 import { throwlhos } from '../../global/Throwlhos.ts'
-import { BaseRules, ICheckObj } from '../baseRules.ts';
+import { BaseRules, ICheckObj } from '../../base/BaseRules.ts';
 import is from '@zarco/isness';
 
 export class TransactionRules extends BaseRules {

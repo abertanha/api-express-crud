@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'npm:express';
-import { Env } from '../config/Env.ts';
-import { TransactionService } from '../services/TransactonService.ts';
-import { TransactionRules } from '../rules/banking/TransactionRules.ts'
-import { Print } from '../utilities/Print.ts'
+import { Env } from '../../config/Env.ts';
+import { TransactionService } from '../../services/TransactonService.ts';
+import { TransactionRules } from './TransactionRules.ts'
+import { Print } from '../../utilities/Print.ts'
 
 export class TransactionController {
   private readonly transactionService: TransactionService;
@@ -19,7 +19,7 @@ export class TransactionController {
     this.transactionRules = transactionRules;
   }
 
-  findTransactionById = async (req: Request, res: Response, next: NextFunction) => {
+  findById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       
@@ -32,7 +32,7 @@ export class TransactionController {
     }
   };
 
-  findTransactionsByAccountId = async (req: Request, res: Response, next: NextFunction) => {
+  findByAccountId = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { accountId } = req.params;
       const page = parseInt(req.query.page as string) || 1;
@@ -60,7 +60,7 @@ export class TransactionController {
     }
   };
 
-  findTransactionsByType = async (req: Request, res: Response, next: NextFunction) => {
+  findByType = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { accountId } = req.params;
       const { type } = req.query;
@@ -71,7 +71,7 @@ export class TransactionController {
       });
 
       if (Env.local) {
-        this.print.info('[Transaction Controller] Filtrando por tipo:', { accountId, type });
+        this.print.info('Filtrando por tipo:', { accountId, type });
       }
 
       const transactions = await this.transactionService.findTransactionsByAccountAndType(
@@ -95,7 +95,7 @@ export class TransactionController {
       });
 
       if (Env.local) {
-        this.print.info('[Transaction Controller] Buscando transferências:', { accountId1, accountId2 });
+        this.print.info('Buscando transferências:', { accountId1, accountId2 });
       };
 
       const transactions = await this.transactionService.findTransfersBetweenAccounts(
@@ -109,14 +109,14 @@ export class TransactionController {
     }
   };
 
-  getAccountStats = async (req: Request, res: Response, next: NextFunction) => {
+  findAccountStats = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { accountId } = req.params;
 
       this.transactionRules.validate({ accountId, isRequiredField: true, rule: 'objectId' });
 
       if (Env.local) {
-        this.print.info('[Transaction Controller] Buscando estatísticas:', { accountId });
+        this.print.info('Buscando estatísticas:', { accountId });
       }
 
       const stats = await this.transactionService.getAccountStats(accountId);

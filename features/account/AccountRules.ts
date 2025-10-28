@@ -1,4 +1,4 @@
-import { BaseRules, ICheckObj } from '../baseRules.ts'
+import { BaseRules, ICheckObj } from '../../base/BaseRules.ts'
 
 export class AccountRules extends BaseRules {
   constructor(){

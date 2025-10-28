@@ -1,11 +1,11 @@
-import { AccountRepository } from '../models/Account/AccountRepository.ts';
-import { throwlhos } from '../global/Throwlhos.ts';
-import { IAccount } from '../models/Account/IAccount.ts';
-import { UserService } from './UserService.ts';
+import { AccountRepository } from '../../models/Account/AccountRepository.ts';
+import { throwlhos } from '../../global/Throwlhos.ts';
+import { IAccount } from '../../models/Account/IAccount.ts';
+import { UserService } from '../../services/UserService.ts';
 import mongoose, { Types } from 'mongoose';
 import is from '@zarco/isness';
-import { TransactionService } from './TransactonService.ts'
-import { Print } from '../utilities/Print.ts'
+import { TransactionService } from '../../services/TransactonService.ts'
+import { Print } from '../../utilities/Print.ts'
 
 
 export interface CreateAccountDTO {
