@@ -1,8 +1,8 @@
 import { Env } from '../config/Env.ts'
 import { Responserror } from '../middlewares/ResponserrorMiddle.ts'
-import { AccountRouter } from '../routes/AccountRouter.ts'
-import { TransactionRouter } from '../routes/TransactionRouter.ts'
-import { UserRouter } from '../routes/UserRouter.ts'
+import { AccountRouter } from '../features/account/AccountRouter.ts'
+import { TransactionRouter } from '../features/transaction/TransactionRouter.ts'
+import { UserRouter } from '../features/user/UserRouter.ts'
 import { AbstractEnvironment } from './AbstractEnvironments.ts'
 import express from 'npm:express';
 

@@ -26,6 +26,9 @@
   },
    "compilerOptions": {
     "strict": true,
+    "types": [
+      "./types/express/index.d.ts"
+    ],
     "lib": [
       "deno.ns",
       "deno.window"
