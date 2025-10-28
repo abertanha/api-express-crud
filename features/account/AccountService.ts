@@ -1,10 +1,10 @@
 import { AccountRepository } from '../../models/Account/AccountRepository.ts';
 import { throwlhos } from '../../global/Throwlhos.ts';
 import { IAccount } from '../../models/Account/IAccount.ts';
-import { UserService } from '../../services/UserService.ts';
+import { UserService } from '../user/UserService.ts';
 import mongoose, { Types } from 'mongoose';
 import is from '@zarco/isness';
-import { TransactionService } from '../../services/TransactonService.ts'
+import { TransactionService } from '../transaction/TransactonService.ts'
 import { Print } from '../../utilities/Print.ts'
 
 
@@ -37,9 +37,6 @@ export interface TransactionDTO {
   description?: string;
 };
 
-// tive duvida aqui, melhor implementar a busca
-// para transacao por acc_id ou acc_number?
-// dai implementaria tbm um index no acc_number ne?
 export interface TransferDTO {
   fromAccountId: string;
   toAccountId: string;
@@ -64,7 +61,7 @@ export class AccountService {
   // crud
   async create(data: CreateAccountDTO): Promise<AccountResponseDTO>{
     const userService = this.getUserService();
-    const userExists = await userService.findUserById(data.userId.toString());
+    const userExists = await userService.findById(data.userId.toString());
     if (!userExists) throw throwlhos.err_notFound('Usuário não encontrado'); 
 
     const isUserActivate = userExists.isActive;
@@ -88,25 +85,27 @@ export class AccountService {
 
     
     if (initialBalance > 0) {
-      await this.transactionService.createTransaction({
+      await this.transactionService.create({
         accountId: accountCreated._id.toString(),
         type: 'deposit',
         amount: initialBalance,
-        description: 'Depósito inicial'
+        description: 'Depósito inicial',
+        balanceBefore: 0,
+        balanceAfter: initialBalance,
       });
     }
 
-    return this.sanitizeAccount(accountCreated);
+    return this.sanitize(accountCreated);
   }
 
-  async findAccountById(id: string): Promise<AccountResponseDTO> {
+  async findById(id: string): Promise<AccountResponseDTO> {
     const account = await this.accountRepository.findById(id);
 
     if(!account) throw throwlhos.err_notFound('Conta não encontrada', { id });
 
-    return this.sanitizeAccount(account);
+    return this.sanitize(account);
   }
-  async findAllAccounts (
+  async findAll (
     page: number = 1,
     limit: number = 10,
     includeInactive: boolean = false
@@ -135,7 +134,7 @@ export class AccountService {
     })
   }
 
-  async findAccountsByUserId(
+  async findByUserId(
     userId: string,
     includeInactive: boolean = false
   ): Promise<AccountResponseDTO[]> {
@@ -143,13 +142,13 @@ export class AccountService {
     if (!includeInactive) query.isActive = true;
 
     const accounts = await this.accountRepository.findMany(query);
-    return accounts.map((a) => this.sanitizeAccount(a));    
+    return accounts.map((a) => this.sanitize(a));    
   }
-  async updateAccount(
+  async update(
     id: string,
     data: Partial<Pick<IAccount,'balance' | 'type'>>
   ): Promise<AccountResponseDTO> {
-    await this.findAccountById(id);
+    await this.findById(id);
     
     if (data.type && !['poupança', 'corrente'].includes(data.type)){
       throw throwlhos.err_badRequest('Tipo de conta inválido.', { type: data.type });
@@ -157,7 +156,7 @@ export class AccountService {
 
     const updatedAccount = await this.accountRepository.updateById(id, data);
 
-    return this.sanitizeAccount(updatedAccount!);
+    return this.sanitize(updatedAccount!);
   }
 
   // operações financeiras
@@ -171,7 +170,7 @@ export class AccountService {
       throw throwlhos.err_badRequest(`Valor ${amount} do depósito deve ser positivo.`);
     }
 
-    const account = await this.findAccountById(accountId);
+    const account = await this.findById(accountId);
     if (!account.isActive) {
       throw throwlhos.err_badRequest('Não é possível depositar em conta desativada', { accountId });
     }
@@ -184,7 +183,7 @@ export class AccountService {
     });
 
     
-    const transaction = await this.transactionService.createTransaction({
+    const transaction = await this.transactionService.create({
       accountId,
       type: 'deposit',
       amount,
@@ -196,7 +195,7 @@ export class AccountService {
     this.print.sucess(` Depósito realizado: R$ ${amount.toFixed(2)} na conta ${account.accNumber}`);
 
     return {
-      account: this.sanitizeAccount(updatedAccount!),
+      account: this.sanitize(updatedAccount!),
       transaction
     };
   }
@@ -228,7 +227,7 @@ export class AccountService {
       balance: this.toDecimal128(newBalance),
     });
 
-    const transaction = await this.transactionService.createTransaction({
+    const transaction = await this.transactionService.create({
       accountId,
       type: 'withdraw',
       amount,
@@ -240,7 +239,7 @@ export class AccountService {
     this.print.sucess(` Saque realizado: R$ ${amount.toFixed(2)} da conta ${account!.accNumber}`);
 
     return {
-      account: this.sanitizeAccount(updatedAccount!),
+      account: this.sanitize(updatedAccount!),
       transaction
     };
   }
@@ -297,7 +296,7 @@ export class AccountService {
     let transferOutTransaction;
     let transferInTransaction;
 
-    const session = await mongoose.startSession();
+
     session.startTransaction();
     try {
       [updatedFromAccount, updatedToAccount] = await Promise.all([
@@ -314,7 +313,7 @@ export class AccountService {
       ]);
       
       [transferOutTransaction, transferInTransaction] = await Promise.all([
-        this.transactionService.createTransaction({
+        this.transactionService.create({
           accountId: fromAccountId,
           type: 'transfer_out',
           amount,
@@ -324,7 +323,7 @@ export class AccountService {
           balanceAfter: newFromBalance,
           session,
         }),
-        this.transactionService.createTransaction({
+        this.transactionService.create({
           accountId: toAccountId,
           type: 'transfer_in',
           amount,
@@ -352,8 +351,8 @@ export class AccountService {
     );
 
     return {
-      fromAccount: this.sanitizeAccount(updatedFromAccount!),
-      toAccount: this.sanitizeAccount(updatedToAccount!),
+      fromAccount: this.sanitize(updatedFromAccount!),
+      toAccount: this.sanitize(updatedToAccount!),
       transactions: {
         transferOut: transferOutTransaction,
         transferIn: transferInTransaction,
@@ -396,7 +395,7 @@ export class AccountService {
   }
 
   async deactivateAccount(accountId: string, force: boolean = false): Promise<void> {
-    const account = await this.findAccountById(accountId);
+    const account = await this.findById(accountId);
 
     await this.isAccountActive(account._id!.toString());
 
@@ -417,13 +416,13 @@ export class AccountService {
 
   async reactivateAccount(accountId: string): Promise<AccountResponseDTO> {
     const userService = new UserService();
-    const account = await this.findAccountById(accountId);
+    const account = await this.findById(accountId);
 
     if (account.isActive) {
       throw throwlhos.err_badRequest('Conta já está ativa', { accountId });
     }
 
-    const user = await userService.findUserById(account.userId.toString());
+    const user = await userService.findById(account.userId.toString());
     if (!user.isActive) {
       throw throwlhos.err_badRequest('Não é possível reativar conta de usuário desativado', {
         accountId,
@@ -435,7 +434,7 @@ export class AccountService {
 
     this.print.sucess(`Conta ${account.accNumber} reativada`);
 
-    return this.sanitizeAccount(reactivatedAccount!);
+    return this.sanitize(reactivatedAccount!);
   }
 
   async deactivateAllAccountsByUserId(userId: string): Promise<void> {
@@ -447,7 +446,7 @@ export class AccountService {
     this.print.sucess(`${result.modifiedCount} contas do usuário ${userId} desativadas`);
   }
 
-  private sanitizeAccount(account: any): AccountResponseDTO {
+  private sanitize(account: any): AccountResponseDTO {
     const accountObj = account.toObject ? account.toObject() : account;
 
     return {
@@ -463,7 +462,7 @@ export class AccountService {
   }
 
   private async isAccountActive(accountId: string): Promise<boolean> {
-    const account = await this.findAccountById(accountId);
+    const account = await this.findById(accountId);
 
     if (!account.isActive) {
       throw throwlhos.err_badRequest('Não é possível sacar de conta desativada', { accountId });

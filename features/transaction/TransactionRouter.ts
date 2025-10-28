@@ -113,7 +113,7 @@ TransactionRouter.get(
   '/transfers/:accountId1/:accountId2',
   PaginationMiddle({ pageDefault: 1, limitDefault: 10, maxLimit: 100 }),
   (req, res, next) => getTransactionController()
-  .findTransfersBetweenAccounts(req, res, next)
+  .findBetweenAccounts(req, res, next)
 );
 
 /**

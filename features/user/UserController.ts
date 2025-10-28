@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'npm:express';
 import { UserRules } from './UserRules.ts';
 import { Env } from '../../config/Env.ts';
-import { UserService } from '../../services/UserService.ts'
+import { UserService } from './UserService.ts'
 import responser from 'responser';
 import { Print } from '../../utilities/Print.ts'
 
@@ -56,7 +56,7 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      const user = await this.userService.findUserById(id);
+      const user = await this.userService.findById(id);
 
       return res.send_ok('Usuário encontrado', user);
 
@@ -71,7 +71,7 @@ export class UserController {
       
       const includeInactive = req.query.includeInactive === 'true';
 
-      const result = await this.userService.findAllUsers(page, limit, includeInactive);
+      const result = await this.userService.findAll(page, limit, includeInactive);
 
       return res.send_ok('Lista de usuários recuperada',result);
     } catch (error) {
@@ -88,7 +88,7 @@ export class UserController {
       if (email) this.userRules.validate({ email });
       if (birthDate) this.userRules.validate({ birthDate });
 
-      const updatedUser = await this.userService.updateUser(id, {
+      const updatedUser = await this.userService.update(id, {
         name,
         email,
         birthDate
@@ -104,7 +104,7 @@ export class UserController {
       const { id } = req.params;
       const force = req.query.force === 'true';
 
-      await this.userService.deactivateUser(id, force);
+      await this.userService.deactivate(id, force);
 
       return res.send_noContent('Usuário desativado com sucesso',null);
 
@@ -120,7 +120,7 @@ export class UserController {
         this.print.info('Reativando usuário:', { id });
       }
 
-      const reactivatedUser = await this.userService.reactivateUser(id);
+      const reactivatedUser = await this.userService.reactivate(id);
 
       return res.send_created('Usuário reativado com sucesso',reactivatedUser);
     } catch (error) {

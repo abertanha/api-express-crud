@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'npm:express';
 import { Env } from '../../config/Env.ts';
-import { TransactionService } from '../../services/TransactonService.ts';
+import { TransactionService } from './TransactonService.ts';
 import { TransactionRules } from './TransactionRules.ts'
 import { Print } from '../../utilities/Print.ts'
 
@@ -24,7 +24,7 @@ export class TransactionController {
       const { id } = req.params;
       
       this.transactionRules.validate({ id, isRequiredField: true, rule: 'objectId' });
-      const transaction = await this.transactionService.findTransactionById(id);
+      const transaction = await this.transactionService.findById(id);
 
       return res.send_ok('Transação encontrada',transaction);
     } catch (error) {
@@ -48,7 +48,7 @@ export class TransactionController {
         this.print.info('Buscando transações:', { accountId, page, limit });
       }
 
-      const result = await this.transactionService.findTransactionsByAccountId(
+      const result = await this.transactionService.findByAccountId(
         accountId,
         page,
         limit
@@ -74,7 +74,7 @@ export class TransactionController {
         this.print.info('Filtrando por tipo:', { accountId, type });
       }
 
-      const transactions = await this.transactionService.findTransactionsByAccountAndType(
+      const transactions = await this.transactionService.findByAccountAndType(
         accountId,
         type as any
       );
@@ -85,7 +85,7 @@ export class TransactionController {
     }
   };
 
-  findTransfersBetweenAccounts = async (req: Request, res: Response, next: NextFunction) => {
+  findBetweenAccounts = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { accountId1, accountId2 } = req.params;
 
@@ -98,7 +98,7 @@ export class TransactionController {
         this.print.info('Buscando transferências:', { accountId1, accountId2 });
       };
 
-      const transactions = await this.transactionService.findTransfersBetweenAccounts(
+      const transactions = await this.transactionService.findBetweenAccounts(
         accountId1,
         accountId2
       );

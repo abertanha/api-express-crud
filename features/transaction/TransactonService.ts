@@ -1,9 +1,9 @@
-import { TransactionRepository } from '../models/Transaction/TransactionRepository.ts';
-import { TransactionType } from '../models/Transaction/ITransaction.ts';
+import { TransactionRepository } from '../../models/Transaction/TransactionRepository.ts';
+import { TransactionType } from '../../models/Transaction/ITransaction.ts';
 import { Types } from 'mongoose';
 import is from '@zarco/isness'
 import { ClientSession } from 'mongoose'
-import { Print } from '../utilities/Print.ts'
+import { Print } from '../../utilities/Print.ts'
 
 export interface CreateTransactionDTO {
   accountId: string;
@@ -43,41 +43,41 @@ export class TransactionService {
     this.transactionRepository = transactionRepository;
   }
 
-  async createTransaction(data: CreateTransactionDTO): Promise<TransactionResponseDTO> {
-    const transactionData = await this.transactionRepository.model.create({
+  async create(data: CreateTransactionDTO): Promise<TransactionResponseDTO> {
+    const transactionData = {
       accountId: new Types.ObjectId(data.accountId),
       type: data.type,
       amount: this.toDecimal128(data.amount),
       description: data.description,
-      balanceBefore: this.toDecimal128(data.balanceBefore!),
-      balanceAfter: this.toDecimal128(data.balanceAfter!),
+      balanceBefore: data.balanceBefore !== undefined ? this.toDecimal128(data.balanceBefore) : undefined,
+      balanceAfter: data.balanceAfter !== undefined ? this.toDecimal128(data.balanceAfter) : undefined,
       relatedAccountId: data.relatedAccountId 
         ? new Types.ObjectId(data.relatedAccountId) 
         : undefined,
       relatedTransactionId: data.relatedTransactionId
         ? new Types.ObjectId(data.relatedTransactionId)
         : undefined,
-    });
+    };
 
     const transaction = data.session
-      ? (await this.transactionRepository.model.create([transactionData],{session: data.session }))[0]
+      ? (await this.transactionRepository.model.create([transactionData],{ session: data.session }))[0]
       : await this.transactionRepository.model.create(transactionData);
 
     this.print.sucess(
       `Transação registrada: ${data.type} - R$ ${data.amount.toFixed(2)}`
     );
 
-    return this.sanitizeTransaction(transaction);
+    return this.sanitize(transaction);
   }
 
-  async findTransactionById(id: string) {
+  async findById(id: string) {
     return await this.transactionRepository
     .findById(id)
     .lean()
     .exec()
   }
 
-  async findTransactionsByAccountId(
+  async findByAccountId(
     accountId: string,
     page: number = 1,
     limit: number = 20
@@ -107,16 +107,16 @@ export class TransactionService {
     }
   }
 
-  async findTransactionsByAccountAndType(
+  async findByAccountAndType(
     accountId: string,
     type: TransactionType
   ): Promise<TransactionResponseDTO[]> {
     const transactions = await this.transactionRepository.findByAccountAndType(accountId, type);
 
-    return transactions.map((t) => this.sanitizeTransaction(t));
+    return transactions.map((t) => this.sanitize(t));
   }
 
-  async findTransfersBetweenAccounts(
+  async findBetweenAccounts(
     accountId1: string,
     accountId2: string
   ): Promise<TransactionResponseDTO[]> {
@@ -125,7 +125,7 @@ export class TransactionService {
       accountId2
     );
 
-    return transactions.map((t) => this.sanitizeTransaction(t));
+    return transactions.map((t) => this.sanitize(t));
   }
 
 
@@ -158,7 +158,7 @@ export class TransactionService {
     };
   }
 
-  private sanitizeTransaction(transaction: any): TransactionResponseDTO {
+  private sanitize(transaction: any): TransactionResponseDTO {
     const transactionObj = transaction.toObject ? transaction.toObject() : transaction;
 
     return {

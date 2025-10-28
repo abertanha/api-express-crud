@@ -1,11 +1,11 @@
-import { UserRepository } from '../models/User/UserRepository.ts'
-import { throwlhos } from '../global/Throwlhos.ts'
-import { IUser } from '../models/User/IUser.ts'
-import { AccountService } from '../features/account/AccountService.ts'
+import { UserRepository } from '../../models/User/UserRepository.ts'
+import { throwlhos } from '../../global/Throwlhos.ts'
+import { IUser } from '../../models/User/IUser.ts'
+import { AccountService } from '../../features/account/AccountService.ts'
 import { randomBytes } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { scryptSync } from 'node:crypto'
-import { Print } from '../utilities/Print.ts'
+import { Print } from '../../utilities/Print.ts'
 
 
 export interface CreateUserDTO {
@@ -61,19 +61,20 @@ export class UserService {
       isActive: true
     });
 
-    return this.sanitizeUser(userCreated);
+    return this.sanitize(userCreated);
   }
 
-  async findUserById(id: string): Promise<UserResponseDTO> {
+  async findById(id: string): Promise<UserResponseDTO> {
     const user = await this.userRepository.findById(id, {
+      name,
       select: '-password'
     });
 
     if(!user) throw throwlhos.err_notFound('Usuário não encontrado', { id });
 
-    return this.sanitizeUser(user);
+    return this.sanitize(user);
   }
-  async findAllUsers (
+  async findAll (
     page: number,
     limit: number,
     includeInactive: boolean = false
@@ -101,7 +102,7 @@ export class UserService {
       paginate: { page, limit },
     })
   }
-  async updateUser(
+  async update(
     id: string,
     data: Partial<Pick<IUser, 'name' | 'email' | 'birthDate'>>
   ): Promise<UserResponseDTO> {
@@ -120,9 +121,9 @@ export class UserService {
       select: '-password'
     });
 
-    return this.sanitizeUser(updatedUser!);
+    return this.sanitize(updatedUser!);
   }
-  async deactivateUser(id: string, force: boolean = false): Promise<void> {
+  async deactivate(id: string, force: boolean = false): Promise<void> {
     const accountService = this.getAccountService();
     const user = await this.userRepository.findById(id);
     if (!user) {
@@ -154,7 +155,7 @@ export class UserService {
     await this.userRepository.updateById(id, { isActive: false });
     this.print.sucess(`Usuário ${user.name} (${id}) desativado com sucesso`);
   }
-  async reactivateUser(id: string): Promise<UserResponseDTO> {
+  async reactivate(id: string): Promise<UserResponseDTO> {
     const user = await this.userRepository.findById(id, { select: '-password' });
     if (!user) {
       throw throwlhos.err_notFound('Usuário não encontrado', { id });
@@ -169,10 +170,10 @@ export class UserService {
     this.print.sucess(`Usuário ${user.name} (${id}) reativado com sucesso`);
     this.print.info(`As contas do usuário permanecem desativadas e devem ser reativadas individualmente`);
 
-    return this.sanitizeUser(reactivatedUser!);
+    return this.sanitize(reactivatedUser!);
   }
     
-  private sanitizeUser(user: any): UserResponseDTO {
+  private sanitize(user: any): UserResponseDTO {
     const userObj = user.toObject ? user.toObject() : user;
 
     const { _password, ...sanitized } = userObj;
