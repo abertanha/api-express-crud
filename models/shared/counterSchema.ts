@@ -1,5 +1,5 @@
 import { Schema } from 'mongoose'
-import { getBankingDB } from '../../database/db/bankingDB.ts'
+import { BankingDB } from '../../database/db/bankingDB.ts'
 import { throwlhos } from '../../global/Throwlhos.ts'
 import { ICounter } from './ICounter.ts'
 
@@ -18,7 +18,7 @@ const counterSchema = new Schema<ICounter>({
 });
 
 export async function getNextAccountNumber(): Promise<number> {
-  const Counter = getBankingDB().model<ICounter>('Counter', counterSchema);
+  const Counter = BankingDB.model<ICounter>('Counter', counterSchema);
 
   const counter = await Counter.findByIdAndUpdate(
     'accNumber',

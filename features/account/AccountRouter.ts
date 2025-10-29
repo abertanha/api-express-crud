@@ -5,7 +5,7 @@ import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
 import { OwnershipMiddleware } from '../../middlewares/OwnershipMiddleware.ts'
 
 const AccountRouter = Router();
-const getAccountController = () => new AccountController();
+const accountController = new AccountController();
 
 /**
  * @openapi
@@ -41,8 +41,7 @@ const getAccountController = () => new AccountController();
 AccountRouter.post(
   '/',
   AuthMiddleware,
-  (req, res, next) => getAccountController()
-  .create(req, res, next)
+  accountController.create
 );
 
 /**
@@ -78,8 +77,7 @@ AccountRouter.get(
   '/',
   AuthMiddleware,
   PaginationMiddle({ pageDefault: 1, limitDefault: 10, maxLimit: 100 }),
-  (req, res, next) => getAccountController()
-  .findAll(req, res, next)
+  accountController.findAll
 );
 
 /**
@@ -103,8 +101,7 @@ AccountRouter.get(
  */
 AccountRouter.get(
   '/user/:userId',
-  (req, res, next) => getAccountController()
-  .findByUserId(req, res, next)
+  accountController.findByUserId
 );
 
 /**
@@ -128,8 +125,7 @@ AccountRouter.get(
  */
 AccountRouter.get(
   '/user/:userId/total-balance',
-  (req, res, next) => getAccountController()
-  .getUserTotalBalance(req, res, next)
+  accountController.getUserTotalBalance
 );
 
 /**
@@ -170,8 +166,7 @@ AccountRouter.post(
   '/transfer',
   AuthMiddleware,
   OwnershipMiddleware.transferAccounts(),
-  (req, res, next) => getAccountController()
-  .transfer(req, res, next)
+  accountController.transfer
 );
 
 /**
@@ -197,8 +192,7 @@ AccountRouter.get(
   '/:id',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getAccountController()
-  .findById(req, res, next)
+  accountController.findById
 );
 
 /**
@@ -224,8 +218,7 @@ AccountRouter.get(
   '/:id/balance',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getAccountController()
-  .getBalance(req, res, next)
+  accountController.getBalance
 );
 
 /**
@@ -264,8 +257,7 @@ AccountRouter.put(
   '/:id',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getAccountController()
-  .update(req, res, next)
+  accountController.update
 );
 
 /**
@@ -303,8 +295,7 @@ AccountRouter.put(
  */
 AccountRouter.post(
   '/:id/deposit',
-  (req, res, next) => getAccountController()
-  .deposit(req, res, next)
+  accountController.deposit
 );
 
 /**
@@ -344,8 +335,7 @@ AccountRouter.post(
   '/:id/withdraw',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getAccountController()
-  .withdraw(req, res, next)
+  accountController.withdraw
 );
 
 /**
@@ -373,8 +363,7 @@ AccountRouter.patch(
   '/:id/deactivate',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getAccountController()
-  .deactivate(req, res, next)
+  accountController.deactivate
 );
 
 /**
@@ -400,8 +389,7 @@ AccountRouter.patch(
   '/:id/reactivate',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getAccountController()
-  .reactivate(req, res, next)
+  accountController.reactivate
 );
 
 export { AccountRouter };

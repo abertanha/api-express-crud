@@ -1,12 +1,12 @@
 import { Model } from 'mongoose'
 import { BaseRepository } from '../../base/BaseRepository.ts'
-import { getBankingDB } from '../../database/db/bankingDB.ts'
+import { BankingDB } from '../../database/db/bankingDB.ts'
 import { IRefreshToken } from './IRefreshToken.ts'
 import { RefreshTokenRefs, RefreshTokenSchema } from './RefreshToken.ts'
 
 class RefreshTokenRepository extends BaseRepository<IRefreshToken> {
   constructor(
-    model: Model<IRefreshToken> = getBankingDB().model<IRefreshToken>(
+    model: Model<IRefreshToken> = BankingDB.model<IRefreshToken>(
       'RefreshToken',
       RefreshTokenSchema,
     ),

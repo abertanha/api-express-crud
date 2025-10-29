@@ -3,7 +3,7 @@ import { AuthController } from './AuthController.ts'
 import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
 
 const AuthRouter = Router()
-const getAuthController = () => new AuthController();
+const authController = new AuthController();
 
  /**
  * @openapi
@@ -33,8 +33,7 @@ const getAuthController = () => new AuthController();
  */
 AuthRouter.post(
   '/login',
-  (req, res, next) => getAuthController()
-  .login(req, res, next)
+  authController.login
 );
 
 /**
@@ -52,8 +51,7 @@ AuthRouter.post(
 AuthRouter.post(
   '/logout',
   AuthMiddleware,
-  (req, res, next) => getAuthController()
-  .logout(req, res, next)
+  authController.logout
 );
 
 /**
@@ -79,8 +77,7 @@ AuthRouter.post(
  */
 AuthRouter.post(
   '/refresh',
-  (req, res, next) => getAuthController()
-  .refresh(req, res, next)
+  authController.refresh
 )
 
 /**
@@ -98,8 +95,7 @@ AuthRouter.post(
 AuthRouter.get(
   '/me',
   AuthMiddleware,
-  (req, res, next) => getAuthController()
-  .me(req, res, next)
+  authController.me
 );
 
 export { AuthRouter }

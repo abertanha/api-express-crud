@@ -1,12 +1,12 @@
 import { BaseRepository } from '../../base/BaseRepository.ts';
 import { ITransaction } from './ITransaction.ts';
 import { TransactionRefs, TransactionSchema } from './Transaction.ts';
-import { getBankingDB } from '../../database/db/bankingDB.ts';
+import { BankingDB } from '../../database/db/bankingDB.ts';
 import { Model } from 'mongoose'
 
 export class TransactionRepository extends BaseRepository<ITransaction> {
   constructor(
-    model: Model<ITransaction> = getBankingDB().model<ITransaction>(
+    model: Model<ITransaction> = BankingDB.model<ITransaction>(
       'Transaction',
       TransactionSchema,
     ),

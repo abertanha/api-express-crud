@@ -5,7 +5,7 @@ import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
 import { OwnershipMiddleware } from '../../middlewares/OwnershipMiddleware.ts'
 
 const TransactionRouter = Router();
-const getTransactionController = () => new TransactionController();
+const transactionController = new TransactionController();
 
 /**
  * @openapi
@@ -29,8 +29,7 @@ TransactionRouter.get(
   '/:id',
   AuthMiddleware,
   OwnershipMiddleware.transaction(),
-  (req, res, next) => getTransactionController()
-  .findById(req, res, next)
+  transactionController.findById
 );
 
 /**
@@ -56,8 +55,7 @@ TransactionRouter.get(
   '/account/:accountId',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getTransactionController()
-  .findByAccountId(req, res, next)
+  transactionController.findByAccountId
 );
 
 /**
@@ -90,8 +88,7 @@ TransactionRouter.get(
   '/account/:accountId/type',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getTransactionController()
-  .findByAccountAndType(req, res, next)
+  transactionController.findByAccountAndType
 );
 
 /**
@@ -123,8 +120,7 @@ TransactionRouter.get(
   '/transfers/:accountId1/:accountId2',
   AuthMiddleware,
   PaginationMiddle({ pageDefault: 1, limitDefault: 10, maxLimit: 100 }),
-  (req, res, next) => getTransactionController()
-  .findBetweenAccounts(req, res, next)
+  transactionController.findBetweenAccounts
 );
 
 /**
@@ -150,8 +146,7 @@ TransactionRouter.get(
   '/account/:accountId/stats',
   AuthMiddleware,
   OwnershipMiddleware.account(),
-  (req, res, next) => getTransactionController()
-  .findAccountStats(req, res, next)
+  transactionController.findAccountStats
 );
 
 export { TransactionRouter };

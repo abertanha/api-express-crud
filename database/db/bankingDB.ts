@@ -15,15 +15,20 @@ const databaseConfiguration = env<IDatabaseConnection>({
   },
 }) as IDatabaseConnection;
 
-export const initializeBankingDB = async () => { 
-  return await Database.initializeNamed('banking', databaseConfiguration);
-};
+// export const initializeBankingDB = async () => { 
+//   return await Database.initializeNamed('banking', databaseConfiguration);
+// };
 
-export const getBankingDB = () => {
-  return Database.getConnection('banking');
+// export const getBankingDB = () => {
+//   return Database.getConnection('banking');
+// }
+
+export const startBankingSession = (): Promise<ClientSession> => {
+  const connection = BankingDB
+  return connection.startSession();
 }
 
-export const startBankingSession = async (): Promise<ClientSession> => {
-  const connection = getBankingDB();
-  return await connection.startSession();
-}
+const database = new Database(databaseConfiguration)
+const BankingDB = database.connect()
+
+export { BankingDB }

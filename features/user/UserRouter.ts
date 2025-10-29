@@ -5,7 +5,7 @@ import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
 import { OwnershipMiddleware } from '../../middlewares/OwnershipMiddleware.ts'
 
 const UserRouter = Router();
-const getUserController = () => new UserController();
+const userController = new UserController();
 
 
 /**
@@ -35,8 +35,7 @@ const getUserController = () => new UserController();
  */
 UserRouter.post(
   '/',
-  (req, res, next) => getUserController()
-  .create(req, res, next)
+  userController.create
 );
 
 /**
@@ -78,8 +77,7 @@ UserRouter.get(
   '/',
   AuthMiddleware,
   PaginationMiddle({ maxLimit: 10 }),
-  (req, res, next) => getUserController()
-  .findAll(req, res, next)
+  userController.findAll
 );
 
 /**
@@ -103,8 +101,7 @@ UserRouter.get(
 UserRouter.get(
   '/:id',
   AuthMiddleware,
-  (req, res, next) => getUserController()
-  .findById(req, res, next)
+  userController.findById
 );
 
 /**
@@ -129,8 +126,7 @@ UserRouter.put(
   '/:id',
   AuthMiddleware,
   OwnershipMiddleware.user(),
-  (req, res, next) => getUserController()
-  .update(req, res, next)
+  userController.update
 );
 
 /**
@@ -155,8 +151,7 @@ UserRouter.patch(
   '/:id/deactivate',
   AuthMiddleware,
   OwnershipMiddleware.user(),
-  (req, res, next) => getUserController()
-  .deactivate(req, res, next)
+  userController.deactivate
 );
 
 /**
@@ -181,8 +176,7 @@ UserRouter.patch(
   '/:id/reactivate',
   AuthMiddleware,
   OwnershipMiddleware.user(),
-  (req, res, next) => getUserController()
-  .reactivate(req, res, next)
+  userController.reactivate
 );
 
 export { UserRouter };
