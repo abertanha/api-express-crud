@@ -7,7 +7,7 @@ import { getBankingDB } from '../../database/db/bankingDB.ts';
 class UserRepository extends BaseRepository<IUser> {
 	constructor(
 		model: Model<IUser> = getBankingDB().model<IUser>(
-			'users',
+			'User',
 			UserSchema,
 		),
 	) {

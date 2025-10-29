@@ -4,19 +4,23 @@ import { Database } from './database/Database.ts';
 import { ApiEnvironment } from './environments/ApiEnvironment.ts';
 import { DevelopmentEnvironment } from './environments/DevelopmentEnvironment.ts'
 import { Print } from './utilities/Print.ts'
+import { initializeModels } from './database/initializeModels.ts'
 
 const server = async () => { 
   const print = new Print();
+
   try {
     print.sucess('Initializing configuration...');
     print.info(`Environment set to env.${Env.name}`);
     print.info(`Is Devlopment: ${Env.isDevLike}`);
     print.info(`Is Production: ${Env.isProductionLike}`);
 
-    
-
     print.info('Connecting to Database...');
     await initializeBankingDB();
+
+    print.info('[Server] 📦 Registering models...')
+    initializeModels()
+    
     print.sucess('Database connection established.');
 
     

@@ -3,12 +3,7 @@ import { BaseSchema } from "../../base/BaseSchema.ts";
 import isValidCPF from "../../utilities/Cpf.ts";
 import isValidBirthDate from "../../utilities/BirthDate.ts";
 import aggregatePaginate from 'npm:mongoose-aggregate-paginate-v2'
-import { boolean } from '@zarco/isness'
 
-export const UserRefs = [{
-                ref: 'userId',
-                select: ['name', 'email']
-              }];
 
 class UserClass implements IUser {
     name: IUser['name'];

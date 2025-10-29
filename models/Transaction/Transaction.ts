@@ -2,6 +2,17 @@ import { Schema } from 'mongoose';
 import { ITransaction } from './ITransaction.ts';
 import { BaseSchema } from '../../base/BaseSchema.ts';
 
+export const TransactionRefs = [
+  {
+    ref: 'accountId',
+    select: ['accNumber', 'balance', 'type', 'userId']
+  },
+  {
+    ref: 'relatedAccountId',
+    select: ['accNumber', 'type']
+  }
+];
+
 class TransactionClass implements ITransaction {
   accountId: ITransaction['accountId'];
   type: ITransaction['type'];
@@ -29,7 +40,7 @@ class TransactionSchemaClass extends BaseSchema {
     super({
       accountId: {
         type: Schema.Types.ObjectId,
-        ref: 'accounts',
+        ref: 'Account',
         required: [true, 'A transação precisa estar vinculada a uma conta'],
         index: true,
       },
@@ -72,12 +83,12 @@ class TransactionSchemaClass extends BaseSchema {
       },
       relatedAccountId: {
         type: Schema.Types.ObjectId,
-        ref: 'accounts',
+        ref: 'Account',
         index: true,
       },
       relatedTransactionId: {
         type: Schema.Types.ObjectId,
-        ref: 'transactions',
+        ref: 'Transaction',
         index: true,
       },
     }, {

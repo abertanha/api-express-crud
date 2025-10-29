@@ -4,6 +4,13 @@ import { BaseSchema } from '../../base/BaseSchema.ts'
 import { getNextAccountNumber } from '../shared/counterSchema.ts'
 import { Print } from '../../utilities/Print.ts'
 
+export const AccountRefs = [
+  {
+    ref: 'userId',
+    select: ['name', 'email', 'cpf']
+  }
+];
+
 const print = new Print();
 
 class AccountClass implements IAccount {
@@ -45,7 +52,7 @@ class AccountSchemaClass extends BaseSchema {
       },
       userId : {
         type: Schema.Types.ObjectId,
-        ref: 'users',
+        ref: 'User',
         required: [true, 'A conta precisa ter um proprietário'],
         index: true
       },

@@ -1,15 +1,18 @@
 import { BaseRepository } from '../../base/BaseRepository.ts';
 import { ITransaction } from './ITransaction.ts';
-import { TransactionSchema } from './Transaction.ts';
+import { TransactionRefs, TransactionSchema } from './Transaction.ts';
 import { getBankingDB } from '../../database/db/bankingDB.ts';
+import { Model } from 'mongoose'
 
 export class TransactionRepository extends BaseRepository<ITransaction> {
-  constructor() {
-    const connection = getBankingDB();
-    const TransactionModel = connection.model<ITransaction>('transactions', TransactionSchema);
-    super(TransactionModel);
+  constructor(
+    model: Model<ITransaction> = getBankingDB().model<ITransaction>(
+      'Transaction',
+      TransactionSchema,
+    ),
+  ){
+    super(model, TransactionRefs)
   }
-
   async findByAccountId(
     accountId: string,
     options?: { limit?: number; skip?: number; sort?: any }
