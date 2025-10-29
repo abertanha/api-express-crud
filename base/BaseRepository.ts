@@ -9,6 +9,7 @@ import {
   QueryOptions,
   Types,
   UpdateQuery,
+  ClientSession,
 } from 'mongoose';
 
 import { throwlhos } from '../global/Throwlhos.ts';
@@ -145,6 +146,30 @@ export class BaseRepository<
     const findMany = this.model.find(query, options)
     this.modelRefs?.forEach((ref) => findMany.populate(ref.ref, ref.select))
     return findMany
+  }
+
+  updateByIdWithSession(
+    id: string | Types.ObjectId,
+    update: UpdateQuery<T>,
+    session: ClientSession,
+    options?: MongooseUpdateQueryOptions
+  ){
+    if(!is.objectId(id)) {
+      throw throwlhos.err_internalServerError(
+        'updateByIdWithSession precisa de um ObjectId válido',
+        { givenId: id, typeofGivenObjectId: typeof id }
+      )
+    }
+    return this.model.findByIdAndUpdate(
+      id,
+      update,
+      {
+        new: true,
+        runValidators: true,
+        session,
+        ...options,
+      }
+    )
   }
 
   updateById(

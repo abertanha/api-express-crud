@@ -2,10 +2,11 @@ import { AccountRepository } from '../../models/Account/AccountRepository.ts';
 import { throwlhos } from '../../global/Throwlhos.ts';
 import { IAccount } from '../../models/Account/IAccount.ts';
 import { UserService } from '../user/UserService.ts';
-import mongoose, { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import is from '@zarco/isness';
 import { TransactionService } from '../transaction/TransactonService.ts'
 import { Print } from '../../utilities/Print.ts'
+import { startBankingSession } from '../../database/db/bankingDB.ts'
 
 
 export interface CreateAccountDTO {
@@ -291,14 +292,22 @@ export class AccountService {
     const toBalance = this.parseBalance(toAccount.balance);
     const newToBalance = toBalance + amount;
 
+    const session = await startBankingSession();
+
+    //console.log('[DEBUG] Session ID:', session.id);
+    //console.log('[DEBUG] Session active?:', session.inTransaction());
+
     let updatedFromAccount;
     let updatedToAccount;
     let transferOutTransaction;
     let transferInTransaction;
 
 
-    session.startTransaction();
+    
     try {
+      session.startTransaction();
+      //console.log('[DEBUG] Transaction started?:', session.inTransaction());
+
       [updatedFromAccount, updatedToAccount] = await Promise.all([
         this.accountRepository.model.findByIdAndUpdate(
           fromAccountId,
@@ -336,14 +345,14 @@ export class AccountService {
       ]);
 
       await session.commitTransaction();
-      this.print.sucess(` Transação commitada com sucesso`);
+      this.print.sucess('Transação commitada com sucesso');
       
     } catch (error) {
       await session.abortTransaction();
-      this.print.error(` Erro na transferência, rollback executado:`, error);
+      this.print.error('Erro na transferência, rollback executado:', error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
 
     this.print.sucess(

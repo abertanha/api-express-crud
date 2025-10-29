@@ -49,8 +49,12 @@ export class TransactionService {
       type: data.type,
       amount: this.toDecimal128(data.amount),
       description: data.description,
-      balanceBefore: data.balanceBefore !== undefined ? this.toDecimal128(data.balanceBefore) : undefined,
-      balanceAfter: data.balanceAfter !== undefined ? this.toDecimal128(data.balanceAfter) : undefined,
+      balanceBefore: data.balanceBefore !== undefined
+        ? this.toDecimal128(data.balanceBefore)
+        : undefined,
+      balanceAfter: data.balanceAfter !== undefined 
+        ? this.toDecimal128(data.balanceAfter)
+        : undefined,
       relatedAccountId: data.relatedAccountId 
         ? new Types.ObjectId(data.relatedAccountId) 
         : undefined,
