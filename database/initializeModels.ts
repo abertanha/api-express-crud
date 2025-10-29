@@ -3,6 +3,7 @@ import { UserSchema } from '../models/User/User.ts'
 import { AccountSchema } from '../models/Account/Account.ts'
 import { TransactionSchema } from '../models/Transaction/Transaction.ts'
 import { Print } from '../utilities/Print.ts'
+import { RefreshTokenSchema } from '../models/RefreshToken/RefreshToken.ts'
 
 const print = new Print()
 let modelsInitialized = false
@@ -29,6 +30,11 @@ export const initializeModels = () => {
     if (!connection.models['Transaction']) {
       connection.model('Transaction', TransactionSchema)
       print.sucess('[Models] ✅ Transaction model registered')
+    }
+
+    if (!connection.models['RefreshToken']) {
+      connection.model('RefreshToken', RefreshTokenSchema)
+      print.sucess('[Models] ✅ RefreshToken model registered')
     }
 
     modelsInitialized = true
