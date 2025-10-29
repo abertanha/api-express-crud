@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from 'npm:express';
 import { UserRules } from './UserRules.ts';
 import { Env } from '../../config/Env.ts';
-import { UserService } from './UserService.ts'
-import responser from 'responser';
-import { Print } from '../../utilities/Print.ts'
+import { UserService } from './UserService.ts';
+import { Print } from '../../utilities/Print.ts';
 
 export class UserController {
   private readonly userService: UserService;

@@ -1,6 +1,7 @@
 import { Router } from 'npm:express';
 import { UserController } from './UserController.ts';
 import { PaginationMiddle } from '../../middlewares/PaginationMiddle.ts'
+import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
 
 const UserRouter = Router();
 const getUserController = () => new UserController();
@@ -72,7 +73,9 @@ UserRouter.post(
  *       400:
  *         description: Parâmetros inválidos
  */
-UserRouter.get('/',
+UserRouter.get(
+  '/',
+  AuthMiddleware,
   PaginationMiddle({ maxLimit: 10 }),
   (req, res, next) => getUserController()
   .findAll(req, res, next)
@@ -96,7 +99,8 @@ UserRouter.get('/',
  *       404:
  *         description: Usuário não encontrado
  */
-UserRouter.get('/:id',
+UserRouter.get(
+  '/:id',
   (req, res, next) => getUserController()
   .findById(req, res, next)
 );
@@ -119,7 +123,8 @@ UserRouter.get('/:id',
  *       404:
  *         description: Usuário não encontrado
  */
-UserRouter.put('/:id',
+UserRouter.put(
+  '/:id',
   (req, res, next) => getUserController()
   .update(req, res, next)
 );
@@ -142,7 +147,9 @@ UserRouter.put('/:id',
  *       404:
  *         description: Usuário não encontrado
  */
-UserRouter.patch('/:id/deactivate',
+UserRouter.patch(
+  '/:id/deactivate',
+  AuthMiddleware,
   (req, res, next) => getUserController()
   .deactivate(req, res, next)
 );
@@ -165,7 +172,9 @@ UserRouter.patch('/:id/deactivate',
  *       404:
  *         description: Usuário não encontrado
  */
-UserRouter.patch('/:id/reactivate',
+UserRouter.patch(
+  '/:id/reactivate',
+  AuthMiddleware,
   (req, res, next) => getUserController()
   .reactivate(req, res, next)
 );

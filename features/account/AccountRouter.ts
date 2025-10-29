@@ -1,6 +1,7 @@
 import { Router } from 'npm:express';
 import { AccountController } from './AccountController.ts';
 import { PaginationMiddle } from '../../middlewares/PaginationMiddle.ts'
+import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
 
 const AccountRouter = Router();
 const getAccountController = () => new AccountController();
@@ -38,6 +39,7 @@ const getAccountController = () => new AccountController();
  */
 AccountRouter.post(
   '/',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .create(req, res, next)
 );
@@ -73,6 +75,7 @@ AccountRouter.post(
  */
 AccountRouter.get(
   '/',
+  AuthMiddleware,
   PaginationMiddle({ pageDefault: 1, limitDefault: 10, maxLimit: 100 }),
   (req, res, next) => getAccountController()
   .findAll(req, res, next)
@@ -164,6 +167,7 @@ AccountRouter.get(
  */
 AccountRouter.post(
   '/transfer',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .transfer(req, res, next)
 );
@@ -189,6 +193,7 @@ AccountRouter.post(
  */
 AccountRouter.get(
   '/:id',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .findById(req, res, next)
 );
@@ -214,6 +219,7 @@ AccountRouter.get(
  */
 AccountRouter.get(
   '/:id/balance',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .getBalance(req, res, next)
 );
@@ -252,6 +258,7 @@ AccountRouter.get(
  */
 AccountRouter.put(
   '/:id',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .update(req, res, next)
 );
@@ -330,6 +337,7 @@ AccountRouter.post(
  */
 AccountRouter.post(
   '/:id/withdraw',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .withdraw(req, res, next)
 );
@@ -357,6 +365,7 @@ AccountRouter.post(
  */
 AccountRouter.patch(
   '/:id/deactivate',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .deactivate(req, res, next)
 );
@@ -382,6 +391,7 @@ AccountRouter.patch(
  */
 AccountRouter.patch(
   '/:id/reactivate',
+  AuthMiddleware,
   (req, res, next) => getAccountController()
   .reactivate(req, res, next)
 );

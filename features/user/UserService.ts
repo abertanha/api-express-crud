@@ -65,11 +65,12 @@ export class UserService {
   }
 
   async findById(id: string): Promise<UserResponseDTO> {
-    const user = await this.userRepository.findById(id, {
-      name,
-      select: '-password'
-    });
-
+    const user = await this.userRepository
+      .findById(id)
+      .select('name email')
+      .lean()
+      .exec();
+    
     if(!user) throw throwlhos.err_notFound('Usuário não encontrado', { id });
 
     return this.sanitize(user);

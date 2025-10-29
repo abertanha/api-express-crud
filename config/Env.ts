@@ -103,9 +103,35 @@ export class Env {
 	static get jwtSecret() {
     const secret = Deno.env.get('JWT_SECRET')
     if (!secret) {
-      throw new Error('JWT_SECRET não foi encontrado nas variáveis env!')
+      throw throwlhos.err_internalServerError('JWT_SECRET não foi encontrado nas variáveis env!')
     }
     return secret
+  }
+
+	static get jwtAuthAlgorithm() {
+    return 'HS256'
+  }
+
+  static get jwtExpiresIn() {
+    return '15m'
+  }
+
+  static get authAccessTokenExpiration() {
+    return 900000
+  }
+
+  static get authRefreshTokenExpiration() {
+		const refreshTokenExpiration = Number(Deno.env.get('AUTH_REFRESH_TOKEN_EXPIRATION')) // 30 dias em milissegundos (padrão)
+    
+		if(!refreshTokenExpiration) {
+			throw throwlhos.err_internalServerError('AUTH_REFRESH_TOKEN_EXPIRATION não encontrado.')
+		}
+
+		return refreshTokenExpiration
+  }
+
+  static get refreshTokenDays() {
+    return Math.floor(this.authRefreshTokenExpiration / (1000 * 60 * 60 * 24))
   }
 }
 

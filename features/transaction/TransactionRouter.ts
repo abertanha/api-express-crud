@@ -1,6 +1,7 @@
 import { Router } from 'npm:express';
 import { TransactionController } from './TransactionController.ts';
 import { PaginationMiddle } from '../../middlewares/PaginationMiddle.ts'
+import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
 
 const TransactionRouter = Router();
 const getTransactionController = () => new TransactionController();
@@ -23,7 +24,9 @@ const getTransactionController = () => new TransactionController();
  *       404:
  *         description: Transação não encontrado
  */
-TransactionRouter.get('/:id',
+TransactionRouter.get(
+  '/:id',
+  AuthMiddleware,
   (req, res, next) => getTransactionController()
   .findById(req, res, next)
 );
@@ -47,7 +50,9 @@ TransactionRouter.get('/:id',
  *       404:
  *         description: Conta não encontrada
  */
-TransactionRouter.get('/account/:accountId',
+TransactionRouter.get(
+  '/account/:accountId',
+  AuthMiddleware,
   (req, res, next) => getTransactionController()
   .findByAccountId(req, res, next)
 );
@@ -80,6 +85,7 @@ TransactionRouter.get('/account/:accountId',
  */
 TransactionRouter.get(
   '/account/:accountId/type',
+  AuthMiddleware,
   (req, res, next) => getTransactionController()
   .findByType(req, res, next)
 );
@@ -111,6 +117,7 @@ TransactionRouter.get(
  */
 TransactionRouter.get(
   '/transfers/:accountId1/:accountId2',
+  AuthMiddleware,
   PaginationMiddle({ pageDefault: 1, limitDefault: 10, maxLimit: 100 }),
   (req, res, next) => getTransactionController()
   .findBetweenAccounts(req, res, next)
@@ -137,6 +144,7 @@ TransactionRouter.get(
  */
 TransactionRouter.get(
   '/account/:accountId/stats',
+  AuthMiddleware,
   (req, res, next) => getTransactionController()
   .findAccountStats(req, res, next)
 );
