@@ -2,6 +2,7 @@ import { Router } from 'npm:express';
 import { AccountController } from './AccountController.ts';
 import { PaginationMiddle } from '../../middlewares/PaginationMiddle.ts'
 import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
+import { OwnershipMiddleware } from '../../middlewares/OwnershipMiddleware.ts'
 
 const AccountRouter = Router();
 const getAccountController = () => new AccountController();
@@ -168,6 +169,7 @@ AccountRouter.get(
 AccountRouter.post(
   '/transfer',
   AuthMiddleware,
+  OwnershipMiddleware.transferAccounts(),
   (req, res, next) => getAccountController()
   .transfer(req, res, next)
 );
@@ -194,6 +196,7 @@ AccountRouter.post(
 AccountRouter.get(
   '/:id',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getAccountController()
   .findById(req, res, next)
 );
@@ -220,6 +223,7 @@ AccountRouter.get(
 AccountRouter.get(
   '/:id/balance',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getAccountController()
   .getBalance(req, res, next)
 );
@@ -259,6 +263,7 @@ AccountRouter.get(
 AccountRouter.put(
   '/:id',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getAccountController()
   .update(req, res, next)
 );
@@ -338,6 +343,7 @@ AccountRouter.post(
 AccountRouter.post(
   '/:id/withdraw',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getAccountController()
   .withdraw(req, res, next)
 );
@@ -366,6 +372,7 @@ AccountRouter.post(
 AccountRouter.patch(
   '/:id/deactivate',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getAccountController()
   .deactivate(req, res, next)
 );
@@ -392,6 +399,7 @@ AccountRouter.patch(
 AccountRouter.patch(
   '/:id/reactivate',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getAccountController()
   .reactivate(req, res, next)
 );

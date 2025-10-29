@@ -5,7 +5,6 @@ declare global {
     interface Request {
       pagination?: IPaginationMiddle.output
 
-      // Autenticação (para quando implementar)
       userId?: string
       user?: any
 

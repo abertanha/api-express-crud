@@ -294,9 +294,7 @@ export class AccountService {
 
     const session = await startBankingSession();
 
-    //console.log('[DEBUG] Session ID:', session.id);
-    //console.log('[DEBUG] Session active?:', session.inTransaction());
-
+    
     let updatedFromAccount;
     let updatedToAccount;
     let transferOutTransaction;

@@ -2,6 +2,7 @@ import { Router } from 'npm:express';
 import { UserController } from './UserController.ts';
 import { PaginationMiddle } from '../../middlewares/PaginationMiddle.ts'
 import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
+import { OwnershipMiddleware } from '../../middlewares/OwnershipMiddleware.ts'
 
 const UserRouter = Router();
 const getUserController = () => new UserController();
@@ -101,6 +102,7 @@ UserRouter.get(
  */
 UserRouter.get(
   '/:id',
+  AuthMiddleware,
   (req, res, next) => getUserController()
   .findById(req, res, next)
 );
@@ -125,6 +127,8 @@ UserRouter.get(
  */
 UserRouter.put(
   '/:id',
+  AuthMiddleware,
+  OwnershipMiddleware.user(),
   (req, res, next) => getUserController()
   .update(req, res, next)
 );
@@ -150,6 +154,7 @@ UserRouter.put(
 UserRouter.patch(
   '/:id/deactivate',
   AuthMiddleware,
+  OwnershipMiddleware.user(),
   (req, res, next) => getUserController()
   .deactivate(req, res, next)
 );
@@ -175,6 +180,7 @@ UserRouter.patch(
 UserRouter.patch(
   '/:id/reactivate',
   AuthMiddleware,
+  OwnershipMiddleware.user(),
   (req, res, next) => getUserController()
   .reactivate(req, res, next)
 );

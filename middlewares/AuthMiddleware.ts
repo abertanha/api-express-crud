@@ -36,7 +36,7 @@ export const AuthMiddleware = async (
     const refreshTokenRepository = new RefreshTokenRepository()
 
     if(!req.headers.authorization) {
-      throw throwlhos.err_unauthorized('Acesso negado: sem autentificaçao.')
+      throw throwlhos.err_unauthorized('Acesso negado: sem autenticação.')
     }
 
     const [bearer, token] = req.headers.authorization.split(' ')

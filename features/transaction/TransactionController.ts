@@ -60,7 +60,7 @@ export class TransactionController {
     }
   };
 
-  findByType = async (req: Request, res: Response, next: NextFunction) => {
+  findByAccountAndType = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { accountId } = req.params;
       const { type } = req.query;

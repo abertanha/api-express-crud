@@ -12,7 +12,7 @@ pelo Atlas da MongoDB.
 ## Funcionalidades
 
 - CRUD básico para usuários
-- Autentificação baseada em identificação do usuário
+- Autenticação baseada em identidade do usuário
 - Criação e gerenciamento de conta bancária, autorização baseada em propriedade
 
 ## Como executar

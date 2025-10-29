@@ -2,6 +2,7 @@ import { Router } from 'npm:express';
 import { TransactionController } from './TransactionController.ts';
 import { PaginationMiddle } from '../../middlewares/PaginationMiddle.ts'
 import { AuthMiddleware } from '../../middlewares/AuthMiddleware.ts'
+import { OwnershipMiddleware } from '../../middlewares/OwnershipMiddleware.ts'
 
 const TransactionRouter = Router();
 const getTransactionController = () => new TransactionController();
@@ -27,6 +28,7 @@ const getTransactionController = () => new TransactionController();
 TransactionRouter.get(
   '/:id',
   AuthMiddleware,
+  OwnershipMiddleware.transaction(),
   (req, res, next) => getTransactionController()
   .findById(req, res, next)
 );
@@ -53,6 +55,7 @@ TransactionRouter.get(
 TransactionRouter.get(
   '/account/:accountId',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getTransactionController()
   .findByAccountId(req, res, next)
 );
@@ -86,8 +89,9 @@ TransactionRouter.get(
 TransactionRouter.get(
   '/account/:accountId/type',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getTransactionController()
-  .findByType(req, res, next)
+  .findByAccountAndType(req, res, next)
 );
 
 /**
@@ -145,6 +149,7 @@ TransactionRouter.get(
 TransactionRouter.get(
   '/account/:accountId/stats',
   AuthMiddleware,
+  OwnershipMiddleware.account(),
   (req, res, next) => getTransactionController()
   .findAccountStats(req, res, next)
 );

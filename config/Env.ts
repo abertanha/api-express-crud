@@ -99,7 +99,7 @@ export class Env {
 
 
 	
-	// variaveis do sistema de autentificação
+	// variaveis do sistema de autenticação
 	static get jwtSecret() {
     const secret = Deno.env.get('JWT_SECRET')
     if (!secret) {
