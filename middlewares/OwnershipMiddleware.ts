@@ -96,6 +96,9 @@ export class OwnershipMiddleware {
         const userId = req.userId
         const { fromAccountId, toAccountId } = req.body
 
+        console.log('🔍 DEBUG Transfer Ownership:');
+        console.log('userId from token:', userId, 'type:', typeof userId);
+
         if(!userId) throw throwlhos.err_unauthorized('Usuário não autenticado')
         if(!fromAccountId || !toAccountId) {
           throw throwlhos.err_badRequest('ids das contas de origem e destino são obrigatórios')
@@ -116,11 +119,18 @@ export class OwnershipMiddleware {
           throw throwlhos.err_notFound('Conta de destino não encontrada', { toAccountId })
         }
 
-        if (fromAccount.userId.toString() !== userId) {
+        const fromAccountUserId = this.getUserId(fromAccount);
+
+        console.log('🔍 DEBUG Transfer Ownership:');
+        console.log('userId from token:', userId);
+        console.log('fromAccountOwnerId:', fromAccountUserId);
+        console.log('Comparison:', fromAccountUserId === userId);
+        
+        if (fromAccountUserId !== userId) {
           if (Env.local) {
             print.error('[OwnershipMiddleware] Transfer denied:', {
               userId,
-              fromAccountOwnerId: fromAccount.userId.toString(),
+              fromAccountOwnerId: fromAccountUserId,
               fromAccountId,
             });
           }
@@ -147,12 +157,14 @@ export class OwnershipMiddleware {
     if (!account) {
       throw throwlhos.err_notFound('Conta não encontrada', { accountId });
     }
+    
+    const accountUserId = this.getUserId(account);
 
-    if (account.userId.toString() !== userId) {
+    if (accountUserId !== userId) {
       if (Env.local) {
         print.error('[OwnershipMiddleware] Access denied:', {
           userId,
-          accountOwnerId: account.userId.toString(),
+          accountOwnerId: accountUserId,
           accountId,
         });
       }
@@ -160,6 +172,13 @@ export class OwnershipMiddleware {
     }
 
     return account;
+  }
+
+  private static getUserId(account: any): string {
+    if (account.userId && account.userId._id) {
+      return account.userId._id.toString();
+    }
+    return account.userId.toString();
   }
 }
 

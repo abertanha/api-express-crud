@@ -67,7 +67,7 @@ export class UserService {
   async findById(id: string): Promise<UserResponseDTO> {
     const user = await this.userRepository
       .findById(id)
-      .select('name email')
+      .select('name email isActive')
       .lean()
       .exec();
     
