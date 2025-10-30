@@ -6,6 +6,7 @@ import { UserRouter } from '../features/user/UserRouter.ts'
 import { AbstractEnvironment } from './AbstractEnvironments.ts'
 import express from 'npm:express';
 import { AuthRouter } from '../features/auth/AuthRouter.ts'
+import { DocsRouter } from '../routes/DocsRouter.ts'
 
 export class DevelopmentEnvironment extends AbstractEnvironment{
 	constructor() {
@@ -24,11 +25,11 @@ export class DevelopmentEnvironment extends AbstractEnvironment{
 				message: 'Servidor de desenvolvimento rolando...'
 			});
 		});
-
-		devServer.use('/api/auth', AuthRouter)
-		devServer.use('/api/users', UserRouter);
-    devServer.use('/api/accounts', AccountRouter);
-    devServer.use('/api/transactions', TransactionRouter);
+		devServer.use(DocsRouter);
+		devServer.use(AuthRouter);
+		devServer.use(UserRouter);
+    devServer.use(AccountRouter);
+    devServer.use(TransactionRouter);
 
 
 		const responseError = new Responserror({ promptErrors: true });

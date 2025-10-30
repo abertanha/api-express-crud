@@ -9,24 +9,31 @@ const transactionController = new TransactionController();
 
 /**
  * @openapi
- * /transaction/{id}:
+ * /api/transactions/{id}:
  *   get:
  *     summary: Busca transação por ID
  *     tags: [transaction]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
+ *         description: ID da transação
  *     responses:
  *       200:
  *         description: Transação encontrada
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
- *         description: Transação não encontrado
+ *         description: Transação não encontrada
  */
 TransactionRouter.get(
-  '/:id',
+  '/api/transactions/:id',
   AuthMiddleware,
   OwnershipMiddleware.transaction(),
   transactionController.findById
@@ -34,10 +41,12 @@ TransactionRouter.get(
 
 /**
  * @openapi
- * /transaction/account/{accountId}:
+ * /api/transactions/account/{accountId}:
  *   get:
  *     summary: Busca todas as transações de uma conta
  *     tags: [transaction]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: accountId
@@ -45,14 +54,30 @@ TransactionRouter.get(
  *           type: string
  *         required: true
  *         description: ID da conta
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número da página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Quantidade de registros por página
  *     responses:
  *       200:
  *         description: Lista de transações da conta
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 TransactionRouter.get(
-  '/account/:accountId',
+  '/api/transactions/account/:accountId',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   transactionController.findByAccountId
@@ -60,10 +85,12 @@ TransactionRouter.get(
 
 /**
  * @openapi
- * /transaction/account/{accountId}/type:
+ * /api/transactions/account/{accountId}/type:
  *   get:
  *     summary: Busca transações de uma conta filtradas por tipo
  *     tags: [transaction]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: accountId
@@ -75,17 +102,21 @@ TransactionRouter.get(
  *         name: type
  *         schema:
  *           type: string
- *           enum: [deposit, withdraw, transfer]
+ *           enum: [deposit, withdraw, transfer_in, transfer_out]
  *         required: true
  *         description: Tipo de transação
  *     responses:
  *       200:
  *         description: Lista de transações filtradas por tipo
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 TransactionRouter.get(
-  '/account/:accountId/type',
+  '/api/transactions/account/:accountId/type',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   transactionController.findByAccountAndType
@@ -93,10 +124,12 @@ TransactionRouter.get(
 
 /**
  * @openapi
- * /transaction/transfers/{accountId1}/{accountId2}:
+ * /api/transactions/transfers/{accountId1}/{accountId2}:
  *   get:
  *     summary: Busca transferências entre duas contas
  *     tags: [transaction]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: accountId1
@@ -110,14 +143,28 @@ TransactionRouter.get(
  *           type: string
  *         required: true
  *         description: ID da segunda conta
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número da página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Quantidade de registros por página
  *     responses:
  *       200:
  *         description: Lista de transferências entre as contas
+ *       401:
+ *         description: Não autenticado
  *       404:
  *         description: Uma ou ambas as contas não foram encontradas
  */
 TransactionRouter.get(
-  '/transfers/:accountId1/:accountId2',
+  '/api/transactions/transfers/:accountId1/:accountId2',
   AuthMiddleware,
   PaginationMiddle({ pageDefault: 1, limitDefault: 10, maxLimit: 100 }),
   transactionController.findBetweenAccounts
@@ -125,10 +172,12 @@ TransactionRouter.get(
 
 /**
  * @openapi
- * /transaction/account/{accountId}/stats:
+ * /api/transactions/account/{accountId}/stats:
  *   get:
  *     summary: Busca estatísticas de transações de uma conta
  *     tags: [transaction]
+ *     security:        
+ *       - bearerAuth: [] 
  *     parameters:
  *       - in: path
  *         name: accountId
@@ -139,11 +188,15 @@ TransactionRouter.get(
  *     responses:
  *       200:
  *         description: Estatísticas da conta (total de depósitos, saques, transferências, etc.)
+ *       401:            
+ *         description: Não autenticado  
+ *       403:            
+ *         description: Sem permissão    
  *       404:
  *         description: Conta não encontrada
  */
 TransactionRouter.get(
-  '/account/:accountId/stats',
+  '/api/transactions/account/:accountId/stats',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   transactionController.findAccountStats

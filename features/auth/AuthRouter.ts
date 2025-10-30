@@ -7,10 +7,10 @@ const authController = new AuthController();
 
  /**
  * @openapi
- * /auth/login:
+ * /api/auth/login:
  *   post:
  *     summary: Realiza login
- *     tags: [Auth]
+ *     tags: [auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -32,16 +32,16 @@ const authController = new AuthController();
  *         description: Credenciais inválidas
  */
 AuthRouter.post(
-  '/login',
+  '/api/auth/login',
   authController.login
 );
 
 /**
  * @openapi
- * /auth/logout:
+ * /api/auth/logout:
  *   post:
  *     summary: Realiza logout
- *     tags: [Auth]
+ *     tags: [auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -49,17 +49,17 @@ AuthRouter.post(
  *         description: Logout realizado com sucesso
  */
 AuthRouter.post(
-  '/logout',
+  '/api/auth/logout',
   AuthMiddleware,
   authController.logout
 );
 
 /**
  * @openapi
- * /auth/refresh:
+ * /api/auth/refresh:
  *   post:
  *     summary: Renova o access token
- *     tags: [Auth]
+ *     tags: [auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -76,16 +76,16 @@ AuthRouter.post(
  *         description: Token renovado
  */
 AuthRouter.post(
-  '/refresh',
+  '/api/auth/refresh',
   authController.refresh
 )
 
 /**
  * @openapi
- * /auth/me:
+ * /api/auth/me:
  *   get:
  *     summary: Retorna dados do usuário logado
- *     tags: [Auth]
+ *     tags: [auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -93,7 +93,7 @@ AuthRouter.post(
  *         description: Dados do usuário
  */
 AuthRouter.get(
-  '/me',
+  '/api/auth/me',
   AuthMiddleware,
   authController.me
 );

@@ -19,16 +19,17 @@ export class ApiEnvironment extends AbstractEnvironment {
     this.initializeDefaultMiddlewares(apiServer);
 
     apiServer.get('/', (_req, res) => {
-      res.send('API está rolando...');
-    });
-    // TODO
-    // apiServer.use(DocsRouter);
-    // apiServer.use(APIRouter);
-    // apiServer.use(AuthRouter);
-    apiServer.use('/api/auth', AuthRouter);
-    apiServer.use('/api/users', UserRouter);
-    apiServer.use('/api/accounts', AccountRouter);
-    apiServer.use('/api/transactions', TransactionRouter);
+			res.send({
+				status: 'OK',
+				enviroment: Env.name,
+				message: 'Servidor de produção rolando...'
+			});
+		});
+
+    apiServer.use(AuthRouter);
+    apiServer.use(UserRouter);
+    apiServer.use(AccountRouter);
+    apiServer.use(TransactionRouter);
 
     const responseError = new Responserror({ promptErrors: Env.local });
     apiServer.use(responseError.errorHandler);

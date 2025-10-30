@@ -10,16 +10,22 @@ const userController = new UserController();
 
 /**
  * @openapi
- * /users:
+ * /api/users:
  *   post:
  *     summary: Cria um novo usuário
- *     tags: [User]
+ *     tags: [user]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - cpf
+ *               - birthDate
  *             properties:
  *               name:
  *                 type: string
@@ -27,23 +33,28 @@ const userController = new UserController();
  *                 type: string
  *               password:
  *                 type: string
- *               balance:
- *                 type: number
+ *               cpf:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *                 format: date
  *     responses:
  *       201:
  *         description: Usuário criado
  */
 UserRouter.post(
-  '/',
+  '/api/users',
   userController.create
 );
 
 /**
  * @openapi
- * /users:
+ * /api/users:
  *   get:
  *     summary: Busca todos os usuários com paginação
- *     tags: [User]
+ *     tags: [user]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -72,9 +83,11 @@ UserRouter.post(
  *                   type: array
  *       400:
  *         description: Parâmetros inválidos
+ *       401:
+ *         description: Não autenticado
  */
 UserRouter.get(
-  '/',
+  '/api/users',
   AuthMiddleware,
   PaginationMiddle({ maxLimit: 10 }),
   userController.findAll
@@ -82,48 +95,74 @@ UserRouter.get(
 
 /**
  * @openapi
- * /user/{id}:
+ * /api/users/{id}:
  *   get:
  *     summary: Busca usuário por ID
- *     tags: [User]
+ *     tags: [user]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
+ *         description: ID do usuário
  *     responses:
  *       200:
  *         description: Usuário encontrado
+ *       401:
+ *         description: Não autenticado
  *       404:
  *         description: Usuário não encontrado
  */
 UserRouter.get(
-  '/:id',
+  '/api/users/:id',
   AuthMiddleware,
   userController.findById
 );
 
 /**
  * @openapi
- * /users/{id}:
+ * /api/users/{id}:
  *   put:
  *     summary: Atualiza usuário por ID
- *     tags: [User]
+ *     tags: [user]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
+ *         description: ID do usuário
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *                 format: date
  *     responses:
- *       200:
- *         description: Usuário encontrado
+ *       206:
+ *         description: Usuário atualizado
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Usuário não encontrado
  */
 UserRouter.put(
-  '/:id',
+  '/api/users/:id',
   AuthMiddleware,
   OwnershipMiddleware.user(),
   userController.update
@@ -131,24 +170,37 @@ UserRouter.put(
 
 /**
  * @openapi
- * /users/{id}/deactivate:
- *   deactive:
- *     summary: Soft_delete o usuário por ID
- *     tags: [User]
+ * /api/users/{id}/deactivate:
+ *   patch:
+ *     summary: Desativa o usuário por ID
+ *     tags: [user]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
+ *         description: ID do usuário
+ *       - in: query
+ *         name: force
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Forçar desativação mesmo com saldo
  *     responses:
  *       200:
- *         description: Usuário removido
+ *         description: Usuário desativado
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Usuário não encontrado
  */
 UserRouter.patch(
-  '/:id/deactivate',
+  '/api/users/:id/deactivate',
   AuthMiddleware,
   OwnershipMiddleware.user(),
   userController.deactivate
@@ -156,24 +208,31 @@ UserRouter.patch(
 
 /**
  * @openapi
- * /users/{id}/reactivate:
- *   delete:
- *     summary: Retira o soft_delete do usuário por ID
- *     tags: [User]
+ * /api/users/{id}/reactivate:
+ *   patch:
+ *     summary: Reativa o usuário por ID
+ *     tags: [user]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
+ *         description: ID do usuário
  *     responses:
  *       200:
- *         description: Usuário removido
+ *         description: Usuário reativado
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Usuário não encontrado
  */
 UserRouter.patch(
-  '/:id/reactivate',
+  '/api/users/:id/reactivate',
   AuthMiddleware,
   OwnershipMiddleware.user(),
   userController.reactivate

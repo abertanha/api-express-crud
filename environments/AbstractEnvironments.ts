@@ -34,6 +34,7 @@ export abstract class AbstractEnvironment {
 
     server.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
     server.use(express.static('public'));
+    server.use('/custom', express.static('docs/custom'));
   }
 
   protected listen(server: Express): void {

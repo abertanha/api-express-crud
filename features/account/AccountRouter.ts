@@ -9,10 +9,12 @@ const accountController = new AccountController();
 
 /**
  * @openapi
- * /account:
+ * /api/accounts:
  *   post:
  *     summary: Cria uma nova conta
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -21,35 +23,42 @@ const accountController = new AccountController();
  *             type: object
  *             required:
  *               - userId
- *               - accountType
+ *               - type
  *             properties:
  *               userId:
  *                 type: string
  *                 description: ID do usuário proprietário da conta
- *               accountType:
+ *               type:
  *                 type: string
- *                 enum: [checking, savings]
+ *                 enum: [corrente, poupança]
  *                 description: Tipo da conta
+ *               balance:
+ *                 type: number
+ *                 description: Saldo inicial (opcional)
  *     responses:
  *       201:
  *         description: Conta criada com sucesso
  *       400:
  *         description: Dados inválidos
+ *       401:
+ *         description: Não autenticado
  *       404:
  *         description: Usuário não encontrado
  */
 AccountRouter.post(
-  '/',
+  '/api/accounts',
   AuthMiddleware,
   accountController.create
 );
 
 /**
  * @openapi
- * /account:
+ * /api/accounts:
  *   get:
  *     summary: Lista todas as contas
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -72,9 +81,11 @@ AccountRouter.post(
  *     responses:
  *       200:
  *         description: Lista de contas
+ *       401:
+ *         description: Não autenticado
  */
 AccountRouter.get(
-  '/',
+  '/api/accounts',
   AuthMiddleware,
   PaginationMiddle({ pageDefault: 1, limitDefault: 10, maxLimit: 100 }),
   accountController.findAll
@@ -82,10 +93,12 @@ AccountRouter.get(
 
 /**
  * @openapi
- * /account/user/{userId}:
+ * /api/accounts/user/{userId}:
  *   get:
  *     summary: Busca todas as contas de um usuário
  *     tags: [account]
+ *     security:              
+ *       - bearerAuth: []     
  *     parameters:
  *       - in: path
  *         name: userId
@@ -93,26 +106,40 @@ AccountRouter.get(
  *           type: string
  *         required: true
  *         description: ID do usuário
+ *       - in: query
+ *         name: includeInactive
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Incluir contas inativas
  *     responses:
  *       200:
  *         description: Lista de contas do usuário
+ *       401:                 
+ *         description: Não autenticado
+ *       403:                 
+ *         description: Sem permissão
  *       404:
  *         description: Usuário não encontrado
  */
 AccountRouter.get(
-  '/user/:userId',
+  '/api/accounts/user/:userId',
+  AuthMiddleware,
+  OwnershipMiddleware.user(),
   accountController.findByUserId
 );
 
 /**
  * @openapi
- * /account/user/{userId}/total-balance:
+ * /api/accounts/user/{userId}/total-balance:
  *   get:
  *     summary: Busca o saldo total de todas as contas de um usuário
  *     tags: [account]
+ *     security:        
+ *       - bearerAuth: [] 
  *     parameters:
  *       - in: path
- *         name: userId
+ *         name: userId 
  *         schema:
  *           type: string
  *         required: true
@@ -120,20 +147,28 @@ AccountRouter.get(
  *     responses:
  *       200:
  *         description: Saldo total do usuário
+ *       401:            
+ *         description: Não autenticado
+ *       403:           
+ *         description: Sem permissão
  *       404:
  *         description: Usuário não encontrado
  */
 AccountRouter.get(
-  '/user/:userId/total-balance',
+  '/api/accounts/user/:userId/total-balance',
+  AuthMiddleware,
+  OwnershipMiddleware.user(),
   accountController.getUserTotalBalance
 );
 
 /**
  * @openapi
- * /account/transfer:
+ * /api/accounts/transfer:
  *   post:
  *     summary: Realiza uma transferência entre contas
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -154,16 +189,23 @@ AccountRouter.get(
  *               amount:
  *                 type: number
  *                 description: Valor a ser transferido
+ *               description:
+ *                 type: string
+ *                 description: Descrição da transferência (opcional)
  *     responses:
  *       200:
  *         description: Transferência realizada com sucesso
  *       400:
  *         description: Dados inválidos ou saldo insuficiente
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Uma ou ambas as contas não foram encontradas
  */
 AccountRouter.post(
-  '/transfer',
+  '/api/accounts/transfer',
   AuthMiddleware,
   OwnershipMiddleware.transferAccounts(),
   accountController.transfer
@@ -171,10 +213,12 @@ AccountRouter.post(
 
 /**
  * @openapi
- * /account/{id}:
+ * /api/accounts/{id}:
  *   get:
  *     summary: Busca uma conta por ID
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -185,11 +229,15 @@ AccountRouter.post(
  *     responses:
  *       200:
  *         description: Conta encontrada
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 AccountRouter.get(
-  '/:id',
+  '/api/accounts/:id',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   accountController.findById
@@ -197,10 +245,12 @@ AccountRouter.get(
 
 /**
  * @openapi
- * /account/{id}/balance:
+ * /api/accounts/{id}/balance:
  *   get:
  *     summary: Busca o saldo de uma conta
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -211,11 +261,15 @@ AccountRouter.get(
  *     responses:
  *       200:
  *         description: Saldo da conta
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 AccountRouter.get(
-  '/:id/balance',
+  '/api/accounts/:id/balance',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   accountController.getBalance
@@ -223,10 +277,12 @@ AccountRouter.get(
 
 /**
  * @openapi
- * /account/{id}:
+ * /api/accounts/{id}:
  *   put:
  *     summary: Atualiza os dados de uma conta
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -241,20 +297,24 @@ AccountRouter.get(
  *           schema:
  *             type: object
  *             properties:
- *               accountType:
+ *               type:
  *                 type: string
- *                 enum: [checking, savings]
+ *                 enum: [corrente, poupança]
  *                 description: Tipo da conta
  *     responses:
- *       200:
+ *       206:
  *         description: Conta atualizada com sucesso
  *       400:
  *         description: Dados inválidos
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 AccountRouter.put(
-  '/:id',
+  '/api/accounts/:id',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   accountController.update
@@ -262,10 +322,12 @@ AccountRouter.put(
 
 /**
  * @openapi
- * /account/{id}/deposit:
+ * /api/accounts/{id}/deposit:
  *   post:
  *     summary: Realiza um depósito em uma conta
  *     tags: [account]
+ *     security:              
+ *       - bearerAuth: []     
  *     parameters:
  *       - in: path
  *         name: id
@@ -285,25 +347,33 @@ AccountRouter.put(
  *               amount:
  *                 type: number
  *                 description: Valor a ser depositado
+ *               description:
+ *                 type: string
+ *                 description: Descrição do depósito (opcional)
  *     responses:
  *       200:
  *         description: Depósito realizado com sucesso
  *       400:
  *         description: Valor inválido
+ *       401:                 
+ *         description: Não autenticado
  *       404:
  *         description: Conta não encontrada
  */
 AccountRouter.post(
-  '/:id/deposit',
+  '/api/accounts/:id/deposit',
+  AuthMiddleware,
   accountController.deposit
 );
 
 /**
  * @openapi
- * /account/{id}/withdraw:
+ * /api/accounts/{id}/withdraw:
  *   post:
  *     summary: Realiza um saque de uma conta
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -323,16 +393,23 @@ AccountRouter.post(
  *               amount:
  *                 type: number
  *                 description: Valor a ser sacado
+ *               description:
+ *                 type: string
+ *                 description: Descrição do saque (opcional)
  *     responses:
  *       200:
  *         description: Saque realizado com sucesso
  *       400:
  *         description: Valor inválido ou saldo insuficiente
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 AccountRouter.post(
-  '/:id/withdraw',
+  '/api/accounts/:id/withdraw',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   accountController.withdraw
@@ -340,10 +417,12 @@ AccountRouter.post(
 
 /**
  * @openapi
- * /account/{id}/deactivate:
+ * /api/accounts/{id}/deactivate:
  *   patch:
  *     summary: Desativa uma conta
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -351,16 +430,26 @@ AccountRouter.post(
  *           type: string
  *         required: true
  *         description: ID da conta
+ *       - in: query
+ *         name: force
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Forçar desativação mesmo com saldo
  *     responses:
  *       200:
  *         description: Conta desativada com sucesso
  *       400:
  *         description: Conta possui saldo e não pode ser desativada
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 AccountRouter.patch(
-  '/:id/deactivate',
+  '/api/accounts/:id/deactivate',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   accountController.deactivate
@@ -368,10 +457,12 @@ AccountRouter.patch(
 
 /**
  * @openapi
- * /account/{id}/reactivate:
+ * /api/accounts/{id}/reactivate:
  *   patch:
  *     summary: Reativa uma conta desativada
  *     tags: [account]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -382,11 +473,15 @@ AccountRouter.patch(
  *     responses:
  *       200:
  *         description: Conta reativada com sucesso
+ *       401:
+ *         description: Não autenticado
+ *       403:
+ *         description: Sem permissão
  *       404:
  *         description: Conta não encontrada
  */
 AccountRouter.patch(
-  '/:id/reactivate',
+  '/api/accounts/:id/reactivate',
   AuthMiddleware,
   OwnershipMiddleware.account(),
   accountController.reactivate
