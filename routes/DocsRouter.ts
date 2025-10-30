@@ -8,11 +8,16 @@ const bankingApi = new Swagger({
   version: '0.0.1',
   routerPaths: [
     './features/user/UserRouter.ts',
-    //'./features/api/auth/AuthRouter.ts',
-    './features/account/AccountRouter',
+    './features/auth/AuthRouter.ts',
+    './features/account/AccountRouter.ts',
     './features/transaction/TransactionRouter.ts',
-    './config/Swagger.ts',
   ],
+  contact: {
+    name: 'Suporte',
+    email: 'suporte@banco.com',
+    url: 'https://banco.com/suporte'
+  },
+  routerDescription: 'api de avaliação da trilha back-end AGX'
 })
 
 DocsRouter.use(

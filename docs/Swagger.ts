@@ -75,6 +75,16 @@ export class Swagger {
             description: this.routerDescription,
           },
         },
+        components: {
+            securitySchemes: {
+              bearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+                description: 'Insira o token JWT no formato: Bearer {token}'
+              }
+            }
+          },
         apis: this.apis,
       })
       print.info('Swagger document generated successfully.')

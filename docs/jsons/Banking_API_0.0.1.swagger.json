@@ -1,0 +1,1255 @@
+{
+  "openapi": "3.0.0",
+  "tags": [],
+  "info": {
+    "title": "Banking API",
+    "version": "0.0.1",
+    "contact": {
+      "name": "Suporte",
+      "email": "suporte@banco.com",
+      "url": "https://banco.com/suporte"
+    },
+    "description": "api de avaliação da trilha back-end AGX"
+  },
+  "paths": {
+    "/api/users": {
+      "post": {
+        "summary": "Cria um novo usuário",
+        "tags": [
+          "user"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "cpf",
+                  "birthDate"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "cpf": {
+                    "type": "string"
+                  },
+                  "birthDate": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado"
+          }
+        }
+      },
+      "get": {
+        "summary": "Busca todos os usuários com paginação",
+        "tags": [
+          "user"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required": false,
+            "description": "Número da página (default = 1)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "description": "Quantidade de usuários por página (default = 10)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuários retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "summary": "Busca usuário por ID",
+        "tags": [
+          "user"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID do usuário"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário encontrado"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza usuário por ID",
+        "tags": [
+          "user"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID do usuário"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "birthDate": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "206": {
+            "description": "Usuário atualizado"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/api/users/{id}/deactivate": {
+      "patch": {
+        "summary": "Desativa o usuário por ID",
+        "tags": [
+          "user"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID do usuário"
+          },
+          {
+            "in": "query",
+            "name": "force",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Forçar desativação mesmo com saldo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário desativado"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/api/users/{id}/reactivate": {
+      "patch": {
+        "summary": "Reativa o usuário por ID",
+        "tags": [
+          "user"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID do usuário"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário reativado"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Realiza login",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso"
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Realiza logout",
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout realizado com sucesso"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "Renova o access token",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refreshTokenId"
+                ],
+                "properties": {
+                  "refreshTokenId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token renovado"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Retorna dados do usuário logado",
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do usuário"
+          }
+        }
+      }
+    },
+    "/api/accounts": {
+      "post": {
+        "summary": "Cria uma nova conta",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId",
+                  "type"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "description": "ID do usuário proprietário da conta"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "corrente",
+                      "poupança"
+                    ],
+                    "description": "Tipo da conta"
+                  },
+                  "balance": {
+                    "type": "number",
+                    "description": "Saldo inicial (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Conta criada com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as contas",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Número da página"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Quantidade de registros por página"
+          },
+          {
+            "in": "query",
+            "name": "includeInactive",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Incluir contas inativas"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de contas"
+          },
+          "401": {
+            "description": "Não autenticado"
+          }
+        }
+      }
+    },
+    "/api/accounts/user/{userId}": {
+      "get": {
+        "summary": "Busca todas as contas de um usuário",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID do usuário"
+          },
+          {
+            "in": "query",
+            "name": "includeInactive",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Incluir contas inativas"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de contas do usuário"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/api/accounts/user/{userId}/total-balance": {
+      "get": {
+        "summary": "Busca o saldo total de todas as contas de um usuário",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID do usuário"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saldo total do usuário"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/api/accounts/transfer": {
+      "post": {
+        "summary": "Realiza uma transferência entre contas",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fromAccountId",
+                  "toAccountId",
+                  "amount"
+                ],
+                "properties": {
+                  "fromAccountId": {
+                    "type": "string",
+                    "description": "ID da conta de origem"
+                  },
+                  "toAccountId": {
+                    "type": "string",
+                    "description": "ID da conta de destino"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Valor a ser transferido"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Descrição da transferência (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transferência realizada com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos ou saldo insuficiente"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Uma ou ambas as contas não foram encontradas"
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}": {
+      "get": {
+        "summary": "Busca uma conta por ID",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conta encontrada"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza os dados de uma conta",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "corrente",
+                      "poupança"
+                    ],
+                    "description": "Tipo da conta"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "206": {
+            "description": "Conta atualizada com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}/balance": {
+      "get": {
+        "summary": "Busca o saldo de uma conta",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saldo da conta"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}/deposit": {
+      "post": {
+        "summary": "Realiza um depósito em uma conta",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amount"
+                ],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "Valor a ser depositado"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Descrição do depósito (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Depósito realizado com sucesso"
+          },
+          "400": {
+            "description": "Valor inválido"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}/withdraw": {
+      "post": {
+        "summary": "Realiza um saque de uma conta",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amount"
+                ],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "Valor a ser sacado"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Descrição do saque (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saque realizado com sucesso"
+          },
+          "400": {
+            "description": "Valor inválido ou saldo insuficiente"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}/deactivate": {
+      "patch": {
+        "summary": "Desativa uma conta",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          },
+          {
+            "in": "query",
+            "name": "force",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Forçar desativação mesmo com saldo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conta desativada com sucesso"
+          },
+          "400": {
+            "description": "Conta possui saldo e não pode ser desativada"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}/reactivate": {
+      "patch": {
+        "summary": "Reativa uma conta desativada",
+        "tags": [
+          "account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conta reativada com sucesso"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/transactions/{id}": {
+      "get": {
+        "summary": "Busca transação por ID",
+        "tags": [
+          "transaction"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da transação"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transação encontrada"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Transação não encontrada"
+          }
+        }
+      }
+    },
+    "/api/transactions/account/{accountId}": {
+      "get": {
+        "summary": "Busca todas as transações de uma conta",
+        "tags": [
+          "transaction"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Número da página"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "description": "Quantidade de registros por página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de transações da conta"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/transactions/account/{accountId}/type": {
+      "get": {
+        "summary": "Busca transações de uma conta filtradas por tipo",
+        "tags": [
+          "transaction"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "deposit",
+                "withdraw",
+                "transfer_in",
+                "transfer_out"
+              ]
+            },
+            "required": true,
+            "description": "Tipo de transação"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de transações filtradas por tipo"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    },
+    "/api/transactions/transfers/{accountId1}/{accountId2}": {
+      "get": {
+        "summary": "Busca transferências entre duas contas",
+        "tags": [
+          "transaction"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId1",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da primeira conta"
+          },
+          {
+            "in": "path",
+            "name": "accountId2",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da segunda conta"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Número da página"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Quantidade de registros por página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de transferências entre as contas"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Uma ou ambas as contas não foram encontradas"
+          }
+        }
+      }
+    },
+    "/api/transactions/account/{accountId}/stats": {
+      "get": {
+        "summary": "Busca estatísticas de transações de uma conta",
+        "tags": [
+          "transaction"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID da conta"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estatísticas da conta (total de depósitos, saques, transferências, etc.)"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Conta não encontrada"
+          }
+        }
+      }
+    }
+  },
+  "components": {}
+}
