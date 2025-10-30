@@ -389,8 +389,15 @@ export class AccountService {
 
     return totalBalance > 0;
   }
-
+  // TODO REVER
   async getUserTotalBalance(userId: string): Promise<number> {
+    const userService = this.getUserService();
+    const user = await userService.findById(userId);
+  
+    if (!user) {
+      throw throwlhos.err_notFound('Usuário não encontrado', { userId });
+    }
+    
     const accounts = await this.accountRepository.findMany({
       userId: new Types.ObjectId(userId),
       isActive: true,
