@@ -1,5 +1,5 @@
 import { scryptSync } from 'node:crypto'
-import { throwlhos } from '../../global/Throwlhos.ts'
+import { throwlhos } from '../../globals/Throwlhos.ts'
 import { RefreshTokenRepository } from '../../models/RefreshToken/RefreshTokenRepository.ts'
 import { UserRepository } from '../../models/User/UserRepository.ts'
 import { Print } from '../../utilities/Print.ts'
@@ -142,6 +142,27 @@ export class AuthService {
     return { 
       token,
       expiresIn: Env.jwtExpiresIn,
+    };
+  }
+
+  async getUserById(userId: string) {
+    const user = await this.userRepository
+      .findById(userId)
+      .select('name email cpf birthDate isActive')
+      .lean()
+      .exec();
+
+    if (!user) {
+      throw throwlhos.err_notFound('Usuário não encontrado', { userId });
+    }
+
+    return {
+      _id: user._id?.toString(),
+      name: user.name,
+      email: user.email,
+      cpf: user.cpf,
+      birthDate: user.birthDate,
+      isActive: user.isActive,
     };
   }
 

@@ -1,4 +1,4 @@
-import { throwlhos } from '../../global/Throwlhos.ts'
+import { throwlhos } from '../../globals/Throwlhos.ts'
 import { BaseRules, ICheckObj } from '../../base/BaseRules.ts';
 import is from '@zarco/isness';
 
@@ -40,7 +40,7 @@ export class TransactionRules extends BaseRules {
     this.rc.addRule('objectId', {
       validator: (value: any) => {
         if (!is.string(value)) return false;
-        if (is.objectId(value)) return true;
+        return is.objectId(value);
       },
       message: 'ID inválido. Deve ser um ObjectId válido do MongoDB',
     });

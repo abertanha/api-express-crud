@@ -1,5 +1,5 @@
 import { UserRepository } from '../../models/User/UserRepository.ts'
-import { throwlhos } from '../../global/Throwlhos.ts'
+import { throwlhos } from '../../globals/Throwlhos.ts'
 import { IUser } from '../../models/User/IUser.ts'
 import { AccountService } from '../../features/account/AccountService.ts'
 import { randomBytes } from "node:crypto";

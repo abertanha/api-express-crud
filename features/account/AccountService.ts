@@ -1,5 +1,5 @@
 import { AccountRepository } from '../../models/Account/AccountRepository.ts';
-import { throwlhos } from '../../global/Throwlhos.ts';
+import { throwlhos } from '../../globals/Throwlhos.ts';
 import { IAccount } from '../../models/Account/IAccount.ts';
 import { UserService } from '../user/UserService.ts';
 import { Types } from 'mongoose';
@@ -48,21 +48,23 @@ export interface TransferDTO {
 export class AccountService {
   private readonly accountRepository: AccountRepository;
   private readonly transactionService: TransactionService;
+  private readonly userService: UserService;
   private readonly print: Print;
 
   constructor(
     accountRepository: AccountRepository = new AccountRepository(),
     transactionService: TransactionService = new TransactionService(),
-    print: Print = new Print()
+    print: Print = new Print(),
+    userService: UserService = new UserService()
   ){
     this.print = print;
     this.accountRepository = accountRepository;
     this.transactionService = transactionService;
+    this.userService = userService; 
   }
   // crud
   async create(data: CreateAccountDTO): Promise<AccountResponseDTO>{
-    const userService = this.getUserService();
-    const userExists = await userService.findById(data.userId.toString());
+    const userExists = await this.userService.findById(data.userId.toString());
     if (!userExists) throw throwlhos.err_notFound('Usuário não encontrado'); 
 
     const isUserActivate = userExists.isActive;
@@ -304,8 +306,7 @@ export class AccountService {
     
     try {
       session.startTransaction();
-      //console.log('[DEBUG] Transaction started?:', session.inTransaction());
-
+      
       [updatedFromAccount, updatedToAccount] = await Promise.all([
         this.accountRepository.model.findByIdAndUpdate(
           fromAccountId,
@@ -389,10 +390,8 @@ export class AccountService {
 
     return totalBalance > 0;
   }
-  // TODO REVER
   async getUserTotalBalance(userId: string): Promise<number> {
-    const userService = this.getUserService();
-    const user = await userService.findById(userId);
+    const user = await this.userService.findById(userId);
   
     if (!user) {
       throw throwlhos.err_notFound('Usuário não encontrado', { userId });
@@ -429,14 +428,13 @@ export class AccountService {
   }
 
   async reactivateAccount(accountId: string): Promise<AccountResponseDTO> {
-    const userService = new UserService();
     const account = await this.findById(accountId);
 
     if (account.isActive) {
       throw throwlhos.err_badRequest('Conta já está ativa', { accountId });
     }
 
-    const user = await userService.findById(account.userId.toString());
+    const user = await this.userService.findById(account.userId.toString());
     if (!user.isActive) {
       throw throwlhos.err_badRequest('Não é possível reativar conta de usuário desativado', {
         accountId,
@@ -492,8 +490,5 @@ export class AccountService {
   }
   private toDecimal128(value: number): Types.Decimal128 { 
     return Types.Decimal128.fromString(value.toString());
-  }
-  private getUserService(): UserService {
-    return new UserService();
   }
 }

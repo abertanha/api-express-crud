@@ -63,9 +63,7 @@ export class AuthController {
 
       if(!userId) return res.send_unauthorized('Usuário não autenticado')
       
-      const { UserService } = await import('../user/UserService.ts')
-      const userService = new UserService()
-      const user = await userService.findById(userId)
+      const user = await this.authService.getUserById(userId)
 
       return res.send_ok('Dados do usuário', user)
     } catch (error) {
