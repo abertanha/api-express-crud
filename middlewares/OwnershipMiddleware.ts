@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'npm:express'
 import { Print } from '../utilities/Print.ts'
-import { throwlhos } from '../global/Throwlhos.ts'
+import { throwlhos } from '../globals/Throwlhos.ts'
 import { AccountRepository } from '../models/Account/AccountRepository.ts'
 import { Env } from '../config/Env.ts'
 import { TransactionRepository } from '../models/Transaction/TransactionRepository.ts'

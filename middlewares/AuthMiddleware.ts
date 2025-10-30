@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'npm:express'
-import { throwlhos } from '../global/Throwlhos.ts'
+import { throwlhos } from '../globals/Throwlhos.ts'
 import { RefreshTokenRepository } from '../models/RefreshToken/RefreshTokenRepository.ts'
 import { UserRepository } from '../models/User/UserRepository.ts'
 import { Print } from '../utilities/Print.ts'
