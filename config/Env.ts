@@ -1,6 +1,6 @@
 import { load } from '@std/dotenv'
 import is from '@zarco/isness'
-import { throwlhos } from '../global/Throwlhos.ts'
+import { throwlhos } from '../globals/Throwlhos.ts'
 
 const name = Deno.env.get('ENV') ?? 'local';
 

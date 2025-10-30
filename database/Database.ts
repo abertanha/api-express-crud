@@ -2,7 +2,7 @@ import mongoose, { type Connection } from 'mongoose'
 import { Env, env, EnvTypes } from '../config/Env.ts'
 import is from '@zarco/isness'
 import { Print } from '../utilities/Print.ts'
-import { throwlhos } from '../global/Throwlhos.ts'
+import { throwlhos } from '../globals/Throwlhos.ts'
 
 const print = new Print();
 
@@ -69,7 +69,7 @@ export class Database {
 				dbName: this.database,
 			};
 
-			const connection: Connection = mongoose.createConnection(this.connectionString, options);
+			const connection: Connection = mongoose.createConnection(this.connectionString, options as any);
 			
 			connection.on('connected', () => {
 				this.print.sucess(`[Database] Successfully connected to ${this.database} at ${this.hostname}`);
@@ -136,7 +136,7 @@ export class Database {
 		
 		await new Promise<void>((resolve, reject) => {
 			connection.once('connected', () => resolve());
-			connection.once('error', (err) => reject(err));
+			connection.once('error', (err: unknown) => reject(err));
 		});
 
 		Database.registerConnection(name, connection);

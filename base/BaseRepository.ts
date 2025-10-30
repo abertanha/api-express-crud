@@ -12,7 +12,7 @@ import {
   ClientSession,
 } from 'mongoose';
 
-import { throwlhos } from '../global/Throwlhos.ts';
+import { throwlhos } from '../globals/Throwlhos.ts';
 import { SaveOptions } from 'mongoose';
 
 export type Pagination<T> = {

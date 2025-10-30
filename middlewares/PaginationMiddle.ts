@@ -1,7 +1,7 @@
 import is from '@zarco/isness'
 import { NextFunction, Request, Response } from 'npm:express'
 import { BaseRules } from '../base/BaseRules.ts'
-import { throwlhos } from '../global/Throwlhos.ts'
+import { throwlhos } from '../globals/Throwlhos.ts'
 
 class PaginateRules extends BaseRules {
   constructor() {

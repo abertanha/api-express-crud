@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose'
 import { BankingDB } from '../../database/db/bankingDB.ts'
-import { throwlhos } from '../../global/Throwlhos.ts'
+import { throwlhos } from '../../globals/Throwlhos.ts'
 import { ICounter } from './ICounter.ts'
 
 const counterSchema = new Schema<ICounter>({
