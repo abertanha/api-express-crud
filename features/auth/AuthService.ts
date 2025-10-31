@@ -107,7 +107,6 @@ export class AuthService {
     const refreshToken = await this.refreshTokenRepository.findById(refreshTokenId);
     
     if(!refreshToken) throw throwlhos.err_unauthorized('Refresh token inválido')
-    // TODO não exportou por que aqui?
     if(refreshToken.hasExpired) {
       await this.refreshTokenRepository.deleteById(refreshTokenId)
       throw throwlhos.err_unauthorized('Refresh token expirado!')

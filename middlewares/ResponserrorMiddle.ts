@@ -99,14 +99,12 @@ export class Responserror {
   ) => {
     this.preFunctions.forEach((fn) => fn.apply(null))
 
-    // Extrai status do erro
     if (error.status) {
       this.responserror.status = error.status
       const code = this.getCodeByStatus(error.status)
       if (code) this.responserror.code = code
     }
 
-    // Extrai código do erro
     if (error.code) {
       this.responserror.code = error.code
       const status = this.getStatusByCode(error.code)
@@ -117,11 +115,9 @@ export class Responserror {
       this.getMessageByCode(this.responserror.code)
     this.responserror.errors = error.errors || error.content
 
-    // Tratamento de erros de validação do Mongoose
     const isValidationSchemaError = this.responserror.errors &&
       JSON.stringify(this.responserror.errors).includes('ValidatorError')
 
-    // Tratamento de erros de índice único do MongoDB
     const isUniqueIndexError = this.responserror.message?.includes('E11000')
 
     if (isUniqueIndexError) {
@@ -165,7 +161,7 @@ export class Responserror {
       }
     }
 
-    // Log de erros se habilitado
+
     if (
       this.options.promptErrors === true ||
       (typeof this.options.promptErrors === 'function' && this.options.promptErrors())
@@ -179,7 +175,6 @@ export class Responserror {
 
     const responserLikeStatus = camelCase(this.responserror.status)
 
-    // Tenta usar método do responser (send_ok, send_badRequest, etc)
     if (typeof (response as any)[`send_${responserLikeStatus}`] === 'function') {
       return (response as any)[`send_${responserLikeStatus}`](
         this.responserror.message,
@@ -187,7 +182,6 @@ export class Responserror {
       )
     }
 
-    // Fallback para response padrão
     const defineResponseErrorCode = (obj: { code?: number }) => {
       if (obj?.code && !isNaN(obj.code)) {
         const code = Number(obj.code)

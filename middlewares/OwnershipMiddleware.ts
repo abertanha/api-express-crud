@@ -96,9 +96,6 @@ export class OwnershipMiddleware {
         const userId = req.userId
         const { fromAccountId, toAccountId } = req.body
 
-        console.log('🔍 DEBUG Transfer Ownership:');
-        console.log('userId from token:', userId, 'type:', typeof userId);
-
         if(!userId) throw throwlhos.err_unauthorized('Usuário não autenticado')
         if(!fromAccountId || !toAccountId) {
           throw throwlhos.err_badRequest('ids das contas de origem e destino são obrigatórios')
@@ -120,11 +117,6 @@ export class OwnershipMiddleware {
         }
 
         const fromAccountUserId = this.getUserId(fromAccount);
-
-        console.log('🔍 DEBUG Transfer Ownership:');
-        console.log('userId from token:', userId);
-        console.log('fromAccountOwnerId:', fromAccountUserId);
-        console.log('Comparison:', fromAccountUserId === userId);
         
         if (fromAccountUserId !== userId) {
           if (Env.local) {
