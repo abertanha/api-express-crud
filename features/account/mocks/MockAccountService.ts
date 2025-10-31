@@ -113,7 +113,6 @@ export class MockAccountService extends AccountService {
     const toBalance = this['parseBalance'](toAccount.balance);
     const newToBalance = toBalance + amount;
 
-    // Atualiza contas sem usar sessão do MongoDB
     const [updatedFromAccount, updatedToAccount] = await Promise.all([
       accountRepository.model.findByIdAndUpdate(
         fromAccountId,

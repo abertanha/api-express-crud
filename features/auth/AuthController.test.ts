@@ -20,7 +20,6 @@ function setupTest() {
   return { authController };
 }
 
-// Registra cleanup global para fechar conexões após todos os testes
 let cleanupRegistered = false;
 if (!cleanupRegistered) {
   cleanupRegistered = true;

@@ -19,7 +19,6 @@ export class MockAuthService extends AuthService {
     );
   }
 
-  // Override login to avoid relying on real hashing and JWT
   override async login(data: { email: string; password: string }) {
     const user = await (this as any).userRepository.findOne({ email: data.email }).exec();
     if (!user) throw { code: 401, status: 'UNAUTHORIZED', message: 'Email ou senha incorretos' };

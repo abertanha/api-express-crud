@@ -21,7 +21,6 @@ function setupTest() {
   return { transactionController, mockTransactionService, mockTransactionRules, mockPrint };
 }
 
-// Registra cleanup global para fechar conexões após todos os testes
 let cleanupRegistered = false;
 if (!cleanupRegistered) {
   cleanupRegistered = true;
