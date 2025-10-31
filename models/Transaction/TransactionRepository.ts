@@ -3,6 +3,7 @@ import { ITransaction } from './ITransaction.ts';
 import { TransactionRefs, TransactionSchema } from './Transaction.ts';
 import { BankingDB } from '../../database/db/bankingDB.ts';
 import { Model } from 'mongoose'
+import { Env } from '../../config/Env.ts'
 
 export class TransactionRepository extends BaseRepository<ITransaction> {
   constructor(
@@ -46,10 +47,13 @@ export class TransactionRepository extends BaseRepository<ITransaction> {
     accountId: string,
     type: ITransaction['type']
   ): Promise<ITransaction[]> {
-    return await this.findMany(
-      { accountId, type },
-      { sort: { createdAt: -1 } }
-    );
+    const transactions = await this.model
+      .find({ accountId, type })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+          
+    return transactions as ITransaction[];
   }
 
   async getTotalByType(
@@ -57,9 +61,26 @@ export class TransactionRepository extends BaseRepository<ITransaction> {
     type: ITransaction['type']
   ): Promise<number> {
     const transactions = await this.findByAccountAndType(accountId, type);
+    
     return transactions.reduce((sum, transaction) => {
-      const amount = transaction.amount.toString();
-      return sum + parseFloat(amount);
+      if (!transaction.amount) {
+        return sum;
+      }
+      let amountValue: number;
+      
+      if (typeof transaction.amount === 'number') {
+        amountValue = transaction.amount;
+      } else if (typeof transaction.amount === 'object' && transaction.amount.toString) {
+        amountValue = parseFloat(transaction.amount.toString());
+      } else {
+        amountValue = parseFloat(String(transaction.amount));
+      }
+      
+      if (isNaN(amountValue)) {
+        return sum;
+      }
+      
+      return sum + amountValue;
     }, 0);
   }
 }

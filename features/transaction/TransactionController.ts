@@ -21,20 +21,26 @@ export class TransactionController {
 
   findById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
       
-      this.transactionRules.validate({ id, isRequiredField: true, rule: 'objectId' });
-      const transaction = await this.transactionService.findById(id);
+      const transaction = req.transaction;
 
-      return res.send_ok('Transação encontrada',transaction);
+      if (!transaction) {
+        const { id } = req.params;
+        this.transactionRules.validate({ id, isRequiredField: true, rule: 'objectId' });
+        const fetchedTransaction = await this.transactionService.findById(id);
+        return res.send_ok('Transação encontrada', fetchedTransaction);
+      }
+
+      return res.send_ok('Transação encontrada', transaction);
     } catch (error) {
       next(error);
     }
   };
 
   findByAccountId = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { accountId } = req.params;
+    try{
+      const accountId = req.account?._id || req.params.accountId;
+      
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
 
@@ -49,7 +55,7 @@ export class TransactionController {
       }
 
       const result = await this.transactionService.findByAccountId(
-        accountId,
+        accountId.toString(),
         page,
         limit
       );
@@ -111,7 +117,7 @@ export class TransactionController {
 
   findAccountStats = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { accountId } = req.params;
+      const accountId = req.account?._id || req.params.accountId;
 
       this.transactionRules.validate({ accountId, isRequiredField: true, rule: 'objectId' });
 

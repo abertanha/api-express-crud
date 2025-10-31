@@ -25,11 +25,11 @@ export class UserController {
       const { name, email, cpf, birthDate, password } = req.body;
       
       this.userRules.validate(
-        { name, isRequiredField: true },
-        { cpf, isRequiredField: true },
-        { email, isRequiredField: true },
-        { birthDate, isRequiredField: true },
-        { password, isRequiredField: true},
+        { name, isRequiredField: true, rule: 'name' },
+        { cpf, isRequiredField: true, rule: 'cpf'},
+        { email, isRequiredField: true, rule: 'email' },
+        { birthDate, isRequiredField: true, rule: 'birthDate' },
+        { password, isRequiredField: true, rule: 'password'},
       );
 
       if (Env.local){
@@ -82,10 +82,12 @@ export class UserController {
     try {
       const { id } = req.params;
       const { name, email, birthDate } = req.body;
-
-      if (name) this.userRules.validate({ name });
-      if (email) this.userRules.validate({ email });
-      if (birthDate) this.userRules.validate({ birthDate });
+      
+      this.userRules.validate(
+        { name, isRequiredField: false, rule: 'name' },
+        { email, isRequiredField: false, rule: 'email' },
+        { birthDate, isRequiredField: false, rule: 'birthDate' }
+      );
 
       const updatedUser = await this.userService.update(id, {
         name,

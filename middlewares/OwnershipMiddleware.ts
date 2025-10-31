@@ -73,13 +73,35 @@ export class OwnershipMiddleware {
 
         const transaction = await transactionRepository.findById(targetTransactionId)
 
+        if (Env.local) {
+          print.info('[OwnershipMiddleware.transaction] Transação encontrada:', {
+            transactionId: transaction?._id?.toString(),
+            accountId: transaction?.accountId?.toString(),
+            type: transaction?.type
+          });
+        }
+
         if (!transaction) throw throwlhos.err_notFound('Transação não encontrada', { transactionId: targetTransactionId})
+        
+        let accountIdStr: string;
+        if (typeof transaction.accountId === 'object' && transaction.accountId._id) {
+          accountIdStr = transaction.accountId._id.toString();
+        } else {
+          accountIdStr = transaction.accountId.toString();
+        }
         
         const account = await this.verifyAccountOwnership(
           userId,
-          transaction.accountId.toString(),
+          accountIdStr,
           accountRepository
         );
+
+        if (Env.local) {
+          print.info('[OwnershipMiddleware.transaction] Conta validada:', {
+            accountId: account._id.toString(),
+            userId: userId
+          });
+        }
 
         req.transaction = transaction
         req.account = account
