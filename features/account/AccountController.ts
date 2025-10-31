@@ -3,6 +3,7 @@ import { AccountRules } from './AccountRules.ts';
 import { Env } from '../../config/Env.ts';
 import { AccountService } from './AccountService.ts';
 import { Print } from '../../utilities/Print.ts'
+import { throwlhos } from '../../globals/Throwlhos.ts'
 
 export class AccountController {
   private readonly accountService: AccountService;
@@ -25,8 +26,9 @@ export class AccountController {
       const { userId, type, balance } = req.body;
 
       this.accountRules.validate(
-        { userId, isRequiredField: true },
-        { type, isRequiredField: true }
+        { userId, isRequiredField: true, rule: 'userId' },
+        { type, isRequiredField: true, rule: 'type' },
+        { balance, rule: 'balance' }
       );
 
       if (Env.local) {
@@ -89,7 +91,7 @@ export class AccountController {
       const { id } = req.params;
       const { type, balance } = req.body;
 
-      if (type) this.accountRules.validate({ type });
+      if (type) this.accountRules.validate({ type, rule: 'type' });
       if (balance !== undefined) this.accountRules.validate({ balance });
 
       const updatedAccount = await this.accountService.update(id, {
@@ -110,6 +112,10 @@ export class AccountController {
       const { id } = req.params;
       const { amount, description } = req.body;
 
+      this.accountRules.validate(
+        { amount, isRequiredField: true, rule: 'amount' }
+      );
+
       this.accountRules.validate({ amount, isRequiredField: true });
 
       if (Env.local) {
@@ -129,7 +135,9 @@ export class AccountController {
       const { id } = req.params;
       const { amount, description } = req.body;
 
-      this.accountRules.validate({ amount, isRequiredField: true });
+      this.accountRules.validate(
+        { amount, isRequiredField: true, rule: 'amount' }
+      );
 
       if (Env.local) {
         this.print.info('[Account Controller] Saque:', { accountId: id, amount });
@@ -148,10 +156,14 @@ export class AccountController {
       const { fromAccountId, toAccountId, amount, description } = req.body;
 
       this.accountRules.validate(
-        { fromAccountId, isRequiredField: true },
-        { toAccountId, isRequiredField: true },
-        { amount, isRequiredField: true }
+        { fromAccountId, isRequiredField: true, rule: 'accountId' },
+        { toAccountId, isRequiredField: true, rule: 'accountId' },
+        { amount, isRequiredField: true, rule: 'amount' }
       );
+
+      if (fromAccountId === toAccountId) {
+        throw throwlhos.err_badRequest('Não é possível transferir para a mesma conta');
+      }
 
       if (Env.local) {
         this.print.info('[Account Controller] Transferência:', {

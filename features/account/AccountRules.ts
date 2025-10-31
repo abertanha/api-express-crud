@@ -1,3 +1,4 @@
+import is from '@zarco/isness'
 import { BaseRules, ICheckObj } from '../../base/BaseRules.ts'
 
 export class AccountRules extends BaseRules {
@@ -19,7 +20,7 @@ export class AccountRules extends BaseRules {
       message: "Tipo de conta deve ser 'poupança' ou 'corrente'"
     })
 
-    this.rc.addRule('transactionAmount', {
+    this.rc.addRule('amount', {
       validator: (value: any) => {
         const num = parseFloat(value)
         return !isNaN(num) && num > 0
@@ -28,8 +29,28 @@ export class AccountRules extends BaseRules {
     })
 
     this.rc.addRule('transactionType', {
-      validator: (value: any) => ['deposit' , 'whithdraw'].includes(value),
+      validator: (value: any) => ['deposit' , 'withdraw'].includes(value),
       message: "Tipo de transação deve ser 'deposit' ou 'withdraw'"
+    })
+
+    this.rc.addRule('userId', {
+      validator: (value: any) => {
+        if(is.string(value) && value.length > 0) {;
+          return true
+        }
+        return false
+      },
+      message: 'ID do usuário inválido'
+    })
+    
+    this.rc.addRule('accountId', {
+      validator: (value: any) => {
+        if(is.string(value) && value.length > 0) {;
+          return true
+        }
+        return false
+      },
+      message: 'ID da conta inválido'
     })
   }
   validateAccountCreate(data: ICheckObj) {

@@ -70,14 +70,7 @@ export class AccountService {
     const isUserActivate = userExists.isActive;
     if (!isUserActivate) throw throwlhos.err_badRequest(`Usuário ${userExists.name} está bloqueado.`);
 
-    if (!['poupança', 'corrente'].includes(data.type)) {
-      throw throwlhos.err_badRequest('Tipo de conta inválido', { type: data.type });
-    }
-
     const initialBalance = data.balance || 0;
-    if (initialBalance < 0) {
-      throw throwlhos.err_badRequest('Saldo inicial não pode ser negativo', { balance: initialBalance });
-    }
 
     const accountCreated = await this.accountRepository.createOne({
       balance: this.toDecimal128(initialBalance),
@@ -152,10 +145,6 @@ export class AccountService {
     data: Partial<Pick<IAccount,'balance' | 'type'>>
   ): Promise<AccountResponseDTO> {
     await this.findById(id);
-    
-    if (data.type && !['poupança', 'corrente'].includes(data.type)){
-      throw throwlhos.err_badRequest('Tipo de conta inválido.', { type: data.type });
-    }
 
     const updatedAccount = await this.accountRepository.updateById(id, data);
 
@@ -169,9 +158,6 @@ export class AccountService {
     amount: number,
     description: string = 'Depósito'
   ): Promise<{ account: AccountResponseDTO; transaction: any }> {
-    if (amount <= 0){
-      throw throwlhos.err_badRequest(`Valor ${amount} do depósito deve ser positivo.`);
-    }
 
     const account = await this.findById(accountId);
     if (!account.isActive) {
@@ -208,9 +194,6 @@ export class AccountService {
     amount: number,
     description: string = 'Saque'
   ): Promise<{ account: AccountResponseDTO; transaction: any }> {
-    if (amount <= 0) {
-      throw throwlhos.err_badRequest('Valor do saque deve ser positivo', { amount });
-    }
 
     await this.isAccountActive(accountId);
     const account = await this.accountRepository.findById(accountId);
@@ -257,14 +240,6 @@ export class AccountService {
   }> {
     const { fromAccountId, toAccountId, amount, description = 'Transferência' } = data;
 
-    if (amount <= 0) {
-      throw throwlhos.err_badRequest('Valor da transferência deve ser positivo', { amount });
-    }
-
-    if (fromAccountId === toAccountId) {
-      throw throwlhos.err_badRequest('Não é possível transferir para a mesma conta');
-    }
-
     const [fromAccount, toAccount] = await Promise.all([
       this.accountRepository.findById(fromAccountId),
       this.accountRepository.findById(toAccountId),
@@ -294,54 +269,61 @@ export class AccountService {
     const toBalance = this.parseBalance(toAccount.balance);
     const newToBalance = toBalance + amount;
 
-    const session = await startBankingSession();
-
-    
+    let session: any = null;
     let updatedFromAccount;
     let updatedToAccount;
     let transferOutTransaction;
     let transferInTransaction;
-
-
     
     try {
+      session = await startBankingSession();
       session.startTransaction();
       
-      [updatedFromAccount, updatedToAccount] = await Promise.all([
-        this.accountRepository.model.findByIdAndUpdate(
-          fromAccountId,
-          { balance: this.toDecimal128(newFromBalance) },
-          { new: true, session }
-        ),
-        this.accountRepository.model.findByIdAndUpdate(
-          toAccountId,
-          { balance: this.toDecimal128(newToBalance) },
-          { new: true, session }
-        ),
-      ]);
+      updatedFromAccount = await this.accountRepository.model.findByIdAndUpdate(
+        fromAccountId,
+        { balance: this.toDecimal128(newFromBalance) },
+        { new: true, session }
+      );
+
+      if (!updatedFromAccount) {
+        throw new Error('Falha ao atualizar conta de origem');
+      }
+
+      updatedToAccount = await this.accountRepository.model.findByIdAndUpdate(
+        toAccountId,
+        { balance: this.toDecimal128(newToBalance) },
+        { new: true, session }
+      );
+
+      if (!updatedToAccount) {
+        throw new Error('Falha ao atualizar conta de destino');
+      }
+
+      this.print.info('✅ Contas atualizadas');
       
-      [transferOutTransaction, transferInTransaction] = await Promise.all([
-        this.transactionService.create({
-          accountId: fromAccountId,
-          type: 'transfer_out',
-          amount,
-          description: `${description} para conta ${toAccount.accNumber}`,
-          relatedAccountId: toAccountId,
-          balanceBefore: fromBalance,
-          balanceAfter: newFromBalance,
-          session,
-        }),
-        this.transactionService.create({
-          accountId: toAccountId,
-          type: 'transfer_in',
-          amount,
-          description: `${description} da conta ${fromAccount.accNumber}`,
-          relatedAccountId: fromAccountId,
-          balanceBefore: toBalance,
-          balanceAfter: newToBalance,
-          session,
-        })
-      ]);
+      transferOutTransaction = await this.transactionService.create({
+        accountId: fromAccountId,
+        type: 'transfer_out',
+        amount,
+        description: `${description} para conta ${toAccount.accNumber}`,
+        relatedAccountId: toAccountId,
+        balanceBefore: fromBalance,
+        balanceAfter: newFromBalance,
+        session,
+      });
+
+      transferInTransaction = await this.transactionService.create({
+        accountId: toAccountId,
+        type: 'transfer_in',
+        amount,
+        description: `${description} da conta ${fromAccount.accNumber}`,
+        relatedAccountId: fromAccountId,
+        balanceBefore: toBalance,
+        balanceAfter: newToBalance,
+        session,
+      });
+
+      this.print.info('✅ Transações registradas');
 
       await session.commitTransaction();
       this.print.sucess('Transação commitada com sucesso');
