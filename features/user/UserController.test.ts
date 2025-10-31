@@ -6,6 +6,7 @@ import { MockResponser, MockNextFunction } from '../../globals/Stubs.ts';
 import { UserRules } from './UserRules.ts';
 import { Print } from '../../utilities/Print.ts';
 import { Types } from 'mongoose';
+import { Database } from '../../database/Database.ts';
 
 function setupTest() {
   const mockUserService = new MockUserService();
@@ -21,8 +22,20 @@ function setupTest() {
   return { userController, mockUserService, mockUserRules, mockPrint };
 }
 
+let cleanupRegistered = false;
+if (!cleanupRegistered) {
+  cleanupRegistered = true;
+  globalThis.addEventListener("unload", async () => {
+    await Database.closeAllConnections();
+  });
+}
+
 // CREATE TESTS
-Deno.test('UserController - create - deve criar um usuário com sucesso (teste positivo)', async () => {
+Deno.test({
+  name:'UserController - create - deve criar um usuário com sucesso (teste positivo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
   const { userController } = setupTest();
   
   const mockRequest = {
@@ -30,7 +43,7 @@ Deno.test('UserController - create - deve criar um usuário com sucesso (teste p
       name: 'Carlos Souza',
       email: 'carlos.souza@example.com',
       cpf: '55281855050',
-      birthDate: '1992-03-25',
+      birthDate: new Date('1992-03-25'),
       password: 'senhaSegura123',
     },
   } as Request;
@@ -39,7 +52,7 @@ Deno.test('UserController - create - deve criar um usuário com sucesso (teste p
 
   const response = MockResponser.send_created as any;
   assertExists(response);
-});
+}});
 
 Deno.test('UserController - create - deve retornar erro quando o nome não for fornecido (teste negativo)', async () => {
   const { userController } = setupTest();

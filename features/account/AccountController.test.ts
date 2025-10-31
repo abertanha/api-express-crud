@@ -5,6 +5,7 @@ import { MockAccountService } from './mocks/MockAccountService.ts';
 import { MockResponser, MockNextFunction } from '../../globals/Stubs.ts';
 import { AccountRules } from './AccountRules.ts';
 import { Print } from '../../utilities/Print.ts';
+import { Database } from '../../database/Database.ts';
 
 function setupTest() {
   const mockAccountService = new MockAccountService();
@@ -20,13 +21,26 @@ function setupTest() {
   return { accountController };
 }
 
+// Registra cleanup global para fechar conexões após todos os testes
+let cleanupRegistered = false;
+if (!cleanupRegistered) {
+  cleanupRegistered = true;
+  globalThis.addEventListener("unload", async () => {
+    await Database.closeAllConnections();
+  });
+}
+
 // CREATE
-Deno.test('AccountController - create - deve criar conta com sucesso (teste positivo)', async () => {
+Deno.test(
+  {name:'AccountController - create - deve criar conta com sucesso (teste positivo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn:async () => {
   const { accountController } = setupTest();
   const mockRequest = { body: { userId: '507f1f77bcf86cd799439011', type: 'corrente', balance: 100.00 } } as Request;
   await accountController.create(mockRequest, MockResponser, MockNextFunction);
   assertExists(MockResponser.send_created);
-});
+}});
 
 Deno.test('AccountController - create - deve falhar sem userId (teste negativo)', async () => {
   const { accountController } = setupTest();

@@ -3,7 +3,9 @@ import { MockAccountRepository } from './MockAccountRepository.ts';
 import { AccountRepository } from '../../../models/Account/AccountRepository.ts';
 import { TransactionService } from '../../transaction/TransactonService.ts';
 import { Print } from '../../../utilities/Print.ts';
-import { MockUserService } from '../../user/mocks/MockUserService.ts';
+import { UserService } from '../../user/UserService.ts';
+import { MockUserRepository } from '../../user/mocks/MockUserRepository.ts';
+import { UserRepository } from '../../../models/User/UserRepository.ts';
 
 export class MockTransactionService extends TransactionService {
   override create(_data: any): Promise<any> {
@@ -26,17 +28,25 @@ export class MockPrint extends Print {
   override error(_message: string, _error?: any) {}
 }
 
+class MockInternalUserService extends UserService {
+  constructor() {
+    super(
+      new MockUserRepository() as unknown as UserRepository,
+      new MockPrint()
+    );
+  }
+}
+
 export class MockAccountService extends AccountService {
   constructor() {
     super(
       new MockAccountRepository() as unknown as AccountRepository,
       new MockTransactionService(),
       new MockPrint(),
-      new MockUserService()
+      new MockInternalUserService()
     );
   }
 
-  // Sobrescreve transfer para não usar sessão do MongoDB
   override async transfer(data: any): Promise<any> {
     const { fromAccountId, toAccountId, amount, description = 'Transferência' } = data;
 

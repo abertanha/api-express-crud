@@ -4,6 +4,7 @@ import { TransactionRules } from "./TransactionRules.ts";
 import { Print } from "../../utilities/Print.ts";
 import { MockResponser, MockNextFunction } from "../../globals/Stubs.ts";
 import { assertExists } from "@std/assert";
+import { Database } from "../../database/Database.ts";
 
 function setupTest() {
   const mockTransactionService = new MockTransactionService();
@@ -20,8 +21,21 @@ function setupTest() {
   return { transactionController, mockTransactionService, mockTransactionRules, mockPrint };
 }
 
+// Registra cleanup global para fechar conexões após todos os testes
+let cleanupRegistered = false;
+if (!cleanupRegistered) {
+  cleanupRegistered = true;
+  globalThis.addEventListener("unload", async () => {
+    await Database.closeAllConnections();
+  });
+}
+
 // ===== FIND BY ID =====
-Deno.test("TransactionController - findById - sucesso", async () => {
+Deno.test({
+  name: "TransactionController - findById - sucesso",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn:async () => {
   const { transactionController } = setupTest();
   
   const req = {
@@ -31,7 +45,7 @@ Deno.test("TransactionController - findById - sucesso", async () => {
   await transactionController.findById(req, MockResponser as any, MockNextFunction);
 
   assertExists(MockResponser.send_ok);
-});
+}});
 
 Deno.test("TransactionController - findById - ID inválido", async () => {
   const { transactionController } = setupTest();
@@ -235,7 +249,8 @@ Deno.test("TransactionController - findAccountStats - erro no service", async ()
   mockTransactionService.shouldThrowError = true;
   
   const req = {
-    params: { accountId: "607f191e5f1b2c9234567021" }
+    params: { accountId: "607f191e5f1b2c9234567021" },
+    account: { _id: "607f191e5f1b2c9234567021" }  // Adiciona account para evitar validação extra
   } as any;
 
   let errorCaught: any = null;

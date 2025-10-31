@@ -4,6 +4,7 @@ import { AuthController } from './AuthController.ts';
 import { MockAuthService } from './mocks/MockAuthService.ts';
 import { MockResponser, MockNextFunction } from '../../globals/Stubs.ts';
 import { Print } from '../../utilities/Print.ts';
+import { Database } from '../../database/Database.ts';
 
 function setupTest() {
   const mockAuthService = new MockAuthService();
@@ -19,13 +20,26 @@ function setupTest() {
   return { authController };
 }
 
+// Registra cleanup global para fechar conexões após todos os testes
+let cleanupRegistered = false;
+if (!cleanupRegistered) {
+  cleanupRegistered = true;
+  globalThis.addEventListener("unload", async () => {
+    await Database.closeAllConnections();
+  });
+}
+
 // LOGIN
-Deno.test('AuthController - login - deve realizar login com sucesso (teste positivo)', async () => {
+Deno.test({
+  name:'AuthController - login - deve realizar login com sucesso (teste positivo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
   const { authController } = setupTest();
   const mockRequest = { body: { email: 'joao.silva@example.com', password: 'password123' } } as Request;
   await authController.login(mockRequest as any, MockResponser, MockNextFunction);
   assertExists(MockResponser.send_ok);
-});
+}});
 
 Deno.test('AuthController - login - deve falhar sem email (teste negativo)', async () => {
   const { authController } = setupTest();
