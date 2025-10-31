@@ -103,9 +103,16 @@ pelo Atlas da MongoDB.
 
 ## Arquivos do sistema
 .
+├── base
+│   ├── BaseRepository.ts
+│   ├── BaseRules.ts
+│   ├── BaseSchema.ts
+│   └── IBaseInterface.ts
+├── config
+│   └── Env.ts
 ├── database
 │   ├── Database.ts
-│   ├── db
+│   └── db
 │       └── bankingDB.ts
 ├── deno.json
 ├── deno.lock
@@ -116,6 +123,10 @@ pelo Atlas da MongoDB.
 │   ├── jsons
 │   │   └── Banking_API_0.0.1.swagger.json
 │   └── Swagger.ts
+├── environments
+│   ├── AbstractEnvironments.ts
+│   ├── ApiEnvironment.ts
+│   └── DevelopmentEnvironment.ts
 ├── features
 │   ├── account
 │   │   ├── AccountController.test.ts
@@ -152,6 +163,9 @@ pelo Atlas da MongoDB.
 │       ├── UserRouter.ts
 │       ├── UserRules.ts
 │       └── UserService.ts
+├── globals
+│   ├── Stubs.ts
+│   └── Throwlhos.ts
 ├── middlewares
 │   ├── AuthMiddleware.ts
 │   ├── OwnershipMiddleware.ts
