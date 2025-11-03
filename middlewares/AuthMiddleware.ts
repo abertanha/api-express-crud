@@ -8,7 +8,7 @@ import { Env } from '../config/Env.ts'
 
 const print = new Print();
 
-interface TokenPayload {
+export interface TokenPayload {
   id: string
   email: string
   name: string

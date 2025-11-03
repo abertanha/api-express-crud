@@ -5,6 +5,7 @@ import { UserRepository } from '../../models/User/UserRepository.ts'
 import { Buffer } from "node:buffer";
 import jwt from 'npm:jsonwebtoken';
 import { Env } from '../../config/Env.ts';
+import { TokenPayload } from '../../middlewares/AuthMiddleware.ts'
 
 export namespace AuthService {
   export type TTokenPayload = {
@@ -77,30 +78,6 @@ export namespace AuthService {
 
     export type Output = TUserProfile
   }
-}
-
-// export interface LoginDTO {
-//   email: string
-//   password: string
-// }
-
-// export interface AuthResponseDTO {
-//   token: string
-//   refreshToken: string
-//   user: {
-//     _id: string
-//     name: string
-//     email: string
-//     cpf: string
-//   }
-//   expiresIn: string
-// }
-
-export interface TokenPayload {
-  id: string
-  email: string
-  name: string
-  refreshTokenId: string
 }
 
 export class AuthService {
