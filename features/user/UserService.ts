@@ -124,38 +124,39 @@ export class UserService {
 
     return this.sanitize(updatedUser!);
   }
-  async deactivate(id: string, force: boolean = false): Promise<void> {
-    const accountService = this.getAccountService();
-    const user = await this.userRepository.findById(id);
-    if (!user) {
-      throw throwlhos.err_notFound('Usuário não encontrado', { id });
-    }
+  // realocado para um service separado para evitar injenção de dependência circular
+  // async deactivate(id: string, force: boolean = false): Promise<void> {
+  //   const accountService = this.getAccountService();
+  //   const user = await this.userRepository.findById(id);
+  //   if (!user) {
+  //     throw throwlhos.err_notFound('Usuário não encontrado', { id });
+  //   }
     
-    if (!user.isActive) {
-      throw throwlhos.err_badRequest('Usuário já está desativado', { id });
-    }
+  //   if (!user.isActive) {
+  //     throw throwlhos.err_badRequest('Usuário já está desativado', { id });
+  //   }
     
-    if (!force) {
-      const hasBalance = await accountService.userHasBalance(id);
-      if (hasBalance) {
-        const totalBalance = await accountService.getUserTotalBalance(id);
-        throw throwlhos.err_badRequest(
-          'Não é possível desativar usuário com saldo em contas. Esvazie as contas primeiro ou use force=true',
-          { 
-            userId: id, 
-            totalBalance,
-            message: `Saldo total: R$ ${totalBalance.toFixed(2)}`
-          }
-        );
-      }
-    }
+  //   if (!force) {
+  //     const hasBalance = await accountService.userHasBalance(id);
+  //     if (hasBalance) {
+  //       const totalBalance = await accountService.getUserTotalBalance(id);
+  //       throw throwlhos.err_badRequest(
+  //         'Não é possível desativar usuário com saldo em contas. Esvazie as contas primeiro ou use force=true',
+  //         { 
+  //           userId: id, 
+  //           totalBalance,
+  //           message: `Saldo total: R$ ${totalBalance.toFixed(2)}`
+  //         }
+  //       );
+  //     }
+  //   }
 
-    await accountService.deactivateAllAccountsByUserId(id);
-    this.print.sucess(`Contas do usuário ${user.name} (${id}) desativadas`);
+  //   await accountService.deactivateAllAccountsByUserId(id);
+  //   this.print.sucess(`Contas do usuário ${user.name} (${id}) desativadas`);
 
-    await this.userRepository.updateById(id, { isActive: false });
-    this.print.sucess(`Usuário ${user.name} (${id}) desativado com sucesso`);
-  }
+  //   await this.userRepository.updateById(id, { isActive: false });
+  //   this.print.sucess(`Usuário ${user.name} (${id}) desativado com sucesso`);
+  // }
   async reactivate(id: string): Promise<UserResponseDTO> {
     const user = await this.userRepository.findById(id, { select: '-password' });
     if (!user) {
@@ -181,7 +182,7 @@ export class UserService {
 
     return sanitized;
   }
-  private getAccountService(): AccountService {
-    return new AccountService();
-  }
+  // private getAccountService(): AccountService {
+  //   return new AccountService();
+  // }
 }

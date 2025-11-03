@@ -3,21 +3,25 @@ import { UserRules } from './UserRules.ts';
 import { Env } from '../../config/Env.ts';
 import { UserService } from './UserService.ts';
 import { Print } from '../../utilities/Print.ts';
+import { SoftDeleteService } from '../../services/SoftDeleteUserService/SoftDeleteUserService.ts'
 
 export class UserController {
   private readonly userService: UserService;
   private userRules: UserRules;
   private readonly print: Print;
+  private readonly softDeleteService: SoftDeleteService;
 
 
   constructor(
     userService: UserService = new UserService(),
     userRules: UserRules = new UserRules(),
-    print: Print = new Print()
+    print: Print = new Print(),
+    softDeleteService: SoftDeleteService = new SoftDeleteService()
   ) {
     this.print = print;
     this.userService = userService;
     this.userRules = userRules;
+    this.softDeleteService = softDeleteService
   }
   
   create = async(req: Request, res: Response, next: NextFunction) =>{
@@ -105,7 +109,7 @@ export class UserController {
       const { id } = req.params;
       const force = req.query.force === 'true';
 
-      await this.userService.deactivate(id, force);
+      await this.softDeleteService.deactivate(id, force);
 
       return res.send_noContent('Usuário desativado com sucesso',null);
 
