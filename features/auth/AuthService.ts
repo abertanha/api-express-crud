@@ -7,6 +7,79 @@ import { Buffer } from "node:buffer";
 import jwt from 'npm:jsonwebtoken';
 import { Env } from '../../config/Env.ts';
 
+export namespace AuthService {
+  export type TTokenPayload = {
+    id: string
+    email: string
+    name: string
+    refreshTokenId: string
+  }
+
+  export type TUserSanitized = {
+    _id: string
+    name:string
+    email: string
+    cpf: string
+  }
+
+  export type TUserProfile = {
+    _id: string
+    name: string
+    email: string
+    cpf: string
+    birthDate: Date
+    isActive?: boolean
+  }
+
+  export namespace Login {
+    export type Input = {
+      input: {
+        email: string
+        password: string
+      }
+    }
+    
+    export type Output = {
+      token: string
+      refreshToken: string
+      user: TUserSanitized
+      expiresIn: string
+    }
+  }
+
+  export namespace Logout {
+    export type Input = {
+      input: {
+        refreshTokenId: string
+      }
+    }
+
+    export type Output = void
+  }
+  
+  export namespace RefreshAccessToken {
+    export type Input = {
+      input: {
+        refreshTokenId: string
+      }
+    }
+    export type Output = {
+      token: string
+      expiresIn: string
+    }
+  }
+
+  export namespace GetUserById {
+    export type Input = { 
+      input: {
+        userId: string
+      }
+    }
+
+    export type Output = TUserProfile
+  }
+}
+
 export interface LoginDTO {
   email: string
   password: string
@@ -45,13 +118,14 @@ export class AuthService {
     this.refreshTokenRepository = refreshTokenRepository
     this.print = print
   }
-  async login(data: LoginDTO): Promise<AuthResponseDTO> {
-    const user = await this.userRepository.findOne({ email: data.email })
+  async login(params: AuthService.Login.Input): Promise<AuthService.Login.Output> {
+    const { email, password } = params.input
+    const user = await this.userRepository.findOne({ email })
     
     if(!user) throw throwlhos.err_unauthorized('Email ou senha incorretos')
     if(!user.isActive) throw throwlhos.err_forbidden('Usuário desativado')
     
-    const isPasswordValid = this.validatePassword(data.password, user.password);
+    const isPasswordValid = this.validatePassword(password, user.password);
     
     if(!isPasswordValid) throw throwlhos.err_unauthorized('Email ou senha incorretos')
     
@@ -80,8 +154,6 @@ export class AuthService {
       }
     )
 
-    this.print.sucess(`✅ Login realizado: ${user.email}`)
-
     return {
       token,
       refreshToken: refreshToken._id!.toString(),
@@ -95,15 +167,14 @@ export class AuthService {
     }
   }
 
-  async logout(refreshTokenId: string): Promise<void> {
+  async logout(params: AuthService.Logout.Input): Promise<AuthService.Logout.Output> {
+    const { refreshTokenId } = params.input
+
     await this.refreshTokenRepository.deleteById(refreshTokenId)
-    this.print.sucess(`✅ Logout realizado`)
   }
 
-  async refreshAccessToken(refreshTokenId: string): Promise<{
-    token: string
-    expiresIn: string
-  }> {
+  async refreshAccessToken(params: AuthService.RefreshAccessToken.Input): Promise<AuthService.RefreshAccessToken.Output> {
+    const { refreshTokenId } = params.input
     const refreshToken = await this.refreshTokenRepository.findById(refreshTokenId);
     
     if(!refreshToken) throw throwlhos.err_unauthorized('Refresh token inválido')
@@ -136,15 +207,15 @@ export class AuthService {
       }
     );
 
-    this.print.sucess(`✅ Token renovado para: ${user.email}`)
-
     return { 
       token,
       expiresIn: Env.jwtExpiresIn,
     };
   }
 
-  async getUserById(userId: string) {
+  async getUserById(params: AuthService.GetUserById.Input): Promise<AuthService.GetUserById.Output> {
+    const { userId } = params.input
+
     const user = await this.userRepository
       .findById(userId)
       .select('name email cpf birthDate isActive')
