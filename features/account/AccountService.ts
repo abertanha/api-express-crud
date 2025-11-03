@@ -335,7 +335,7 @@ export class AccountService {
       balanceAfter: newBalance
     });
 
-    this.print.sucess(` Depósito realizado: R$ ${input.amount.toFixed(2)} na conta ${account.accNumber}`);
+    this.print.success(` Depósito realizado: R$ ${input.amount.toFixed(2)} na conta ${account.accNumber}`);
 
     return {
       account: this.sanitize(updatedAccount!),
@@ -537,7 +537,7 @@ export class AccountService {
 
     await this.accountRepository.updateById(input.accountId, { isActive: false });
 
-    this.print.sucess(` Conta ${account.accNumber} desativada`);
+    this.print.success(` Conta ${account.accNumber} desativada`);
   }
 
   async reactivate(input: AccountService.Reactivate.Input): Promise<AccountService.Reactivate.Output> {
@@ -557,7 +557,7 @@ export class AccountService {
 
     const reactivatedAccount = await this.accountRepository.updateById(account._id, { isActive: true });
 
-    this.print.sucess(`Conta ${account.accNumber} reativada`);
+    this.print.success(`Conta ${account.accNumber} reativada`);
 
     return this.sanitize(reactivatedAccount!);
   }

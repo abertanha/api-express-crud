@@ -50,9 +50,9 @@ export class SoftDeleteService {
         force: true
       });
     }
-    this.print.sucess(`Contas do usuário ${user.name} (${id}) desativadas`);
+    this.print.success(`Contas do usuário ${user.name} (${id}) desativadas`);
 
     await this.userRepository.updateById(id, { isActive: false });
-    this.print.sucess(`Usuário ${user.name} (${id}) desativado com sucesso`);
+    this.print.success(`Usuário ${user.name} (${id}) desativado com sucesso`);
   }
 }

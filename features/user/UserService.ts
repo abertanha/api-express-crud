@@ -205,7 +205,7 @@ export class UserService {
       { select: '-password' }
     );
 
-    this.print.sucess(`Usuário ${user.name} (${input.id}) reativado com sucesso`);
+    this.print.success(`Usuário ${user.name} (${input.id}) reativado com sucesso`);
     this.print.info(`As contas do usuário permanecem desativadas e devem ser reativadas individualmente`);
 
     return this.sanitize(reactivatedUser!);

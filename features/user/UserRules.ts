@@ -1,6 +1,5 @@
 import is from '@zarco/isness'
 import { BaseRules } from '../../base/BaseRules.ts'
-import isValidCPF from '../../utilities/Cpf.ts'
 import isValidBirthDate from '../../utilities/BirthDate.ts'
 
 
@@ -19,8 +18,8 @@ export class UserRules extends BaseRules {
 
     this.rc.addRule('cpf', {
       validator: (value: any) => {
-        if (!is.string(value)) return false;
-        const result = isValidCPF(value);
+        if (!is.cpf(value)) return false;
+        const result = is.cpf(value);
         return result;
       },
       message: 'O CPF informado é inválido',

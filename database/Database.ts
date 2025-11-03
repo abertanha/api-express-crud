@@ -72,7 +72,7 @@ export class Database {
 			const connection: Connection = mongoose.createConnection(this.connectionString, options as any);
 			
 			connection.on('connected', () => {
-				this.print.sucess(`[Database] Successfully connected to ${this.database} at ${this.hostname}`);
+				this.print.success(`[Database] Successfully connected to ${this.database} at ${this.hostname}`);
 			});
 
 			connection.on('error', (err: unknown) => {

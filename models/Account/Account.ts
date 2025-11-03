@@ -79,7 +79,7 @@ AccountSchema.pre('save', async function (next) {
   if (this.isNew && !this.accNumber) {
     try {
       this.accNumber = await getNextAccountNumber();
-      print.sucess(`No. da conta gerado: ${this.accNumber}`);
+      print.success(`No. da conta gerado: ${this.accNumber}`);
       next();
     } catch (error: unknown) {
       print.error('Erro ao gerar no. de conta');

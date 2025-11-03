@@ -1,8 +1,8 @@
 import { IUser } from "./IUser.ts";
 import { BaseSchema } from "../../base/BaseSchema.ts";
-import isValidCPF from "../../utilities/Cpf.ts";
 import isValidBirthDate from "../../utilities/BirthDate.ts";
 import aggregatePaginate from 'npm:mongoose-aggregate-paginate-v2'
+import is from '@zarco/isness'
 
 
 class UserClass implements IUser {
@@ -33,7 +33,7 @@ class UserSchemaClass extends BaseSchema {
         unique: true,
         validate:{
           validator: function(v: any) {
-            return isValidCPF(v); 
+            return is.cpf(v); 
           }, 
           message: (props: any) => `${props.value} não é um CPF válido!` 
         },

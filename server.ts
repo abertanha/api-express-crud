@@ -10,7 +10,7 @@ const server = async () => {
   const print = new Print();
 
   try {
-    print.sucess('Initializing configuration...');
+    print.success('Initializing configuration...');
     print.info(`Environment set to env.${Env.name}`);
     print.info(`Is Devlopment: ${Env.isDevLike}`);
     print.info(`Is Production: ${Env.isProductionLike}`);
@@ -29,7 +29,7 @@ const server = async () => {
     const shutdown = async () => {
       print.info('\nGraceful shutdown initiated...');
       await Database.closeAllConnections();
-      print.sucess('Shutdown complete.');
+      print.success('Shutdown complete.');
       Deno.exit(0);
     }
 

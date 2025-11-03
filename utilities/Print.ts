@@ -35,7 +35,7 @@ export class Print {
     this.logWithColor(fullMessage, 'blue')
   }
 
-  sucess(message: string, content?: unknown) {
+  success(message: string, content?: unknown) {
     let fullMessage = `[${this.getTimestamp()}] ✅ [${this.fileIdentificator}] ${this.fixedAlternativePrefix}${message}`
     
     if (content) {
