@@ -7,6 +7,7 @@ import is from '@zarco/isness';
 import { TransactionService } from '../transaction/TransactonService.ts'
 import { Print } from '../../utilities/Print.ts'
 import { startBankingSession } from '../../database/db/bankingDB.ts'
+import { ClientSession } from 'mongoose'
 
 export namespace AccountService {
   export type TAccountSanitized = {
@@ -33,8 +34,8 @@ export namespace AccountService {
     fromAccount: TAccountSanitized
     toAccount: TAccountSanitized
     transactions: {
-      transferOut: any
-      transferIn: any
+      transferOut: TransactionService.TTransactionSanitized
+      transferIn: TransactionService.TTransactionSanitized
     }
   }
   export namespace Create {
@@ -111,10 +112,15 @@ export namespace AccountService {
 
   export namespace Transfer {
     export type Input = {
-      fromAccountId: string
-      toAccountId: string
-      amount: number
-      description?: string
+      input: {
+        fromAccountId: string
+        toAccountId: string
+        amount: number
+        description?: string
+      }
+      options?:{
+        bankingSession?: ClientSession
+      }
     }
 
     export type Output = TTransferResult
@@ -160,42 +166,6 @@ export namespace AccountService {
     export type Output = TAccountSanitized
   }
 }
-
-// export interface CreateAccountDTO {
-//   balance?: number;
-//   type: 'poupança' | 'corrente';
-//   userId: string;
-// };
-
-// export interface AccountResponseDTO {
-//   _id?: string;
-//   accNumber: number;
-//   balance: number;
-//   type: 'poupança' | 'corrente';
-//   userId: {
-//     _id: string;
-//     name: string;
-//     email:string;
-//     cpf: string;
-//   } | string;
-//   isActive: boolean;
-//   createdAt?: Date;
-//   updatedAt?: Date;
-// };
-
-// export interface TransactionDTO {
-//   accountId: string;
-//   amount: number;
-//   type: 'credit' | 'debit' | 'transfer';
-//   description?: string;
-// };
-
-// export interface TransferDTO {
-//   fromAccountId: string;
-//   toAccountId: string;
-//   amount: number;
-//   description?: string;
-// };
 
 export class AccountService {
   private readonly accountRepository: AccountRepository;
@@ -378,11 +348,18 @@ export class AccountService {
     };
   }
 
-  async transfer(input: AccountService.Transfer.Input): Promise<AccountService.Transfer.Output> {
+  async transfer(params: AccountService.Transfer.Input): Promise<AccountService.Transfer.Output> {
+    const { input, options } = params
+    const isExternalTransaction = !!options?.bankingSession
+    
+    const session = isExternalTransaction
+      ? options.bankingSession!
+      : await startBankingSession()
+
     const description = input.description || "Transferência"
     
     const [fromAccount, toAccount] = await Promise.all([
-      this.accountRepository.findById(input.fromAccountId),
+      this.accountRepository.findById( input.fromAccountId),
       this.accountRepository.findById(input.toAccountId),
     ]);
 
@@ -410,16 +387,13 @@ export class AccountService {
     const toBalance = this.parseBalance(toAccount.balance);
     const newToBalance = toBalance + input.amount;
 
-    let session: any = null;
     let updatedFromAccount;
     let updatedToAccount;
     let transferOutTransaction;
     let transferInTransaction;
     
     try {
-      session = await startBankingSession();
-      session.startTransaction();
-      
+      // atualiza conta de origem
       updatedFromAccount = await this.accountRepository.model.findByIdAndUpdate(
         input.fromAccountId,
         { balance: this.toDecimal128(newFromBalance) },
@@ -429,7 +403,7 @@ export class AccountService {
       if (!updatedFromAccount) {
         throw new Error('Falha ao atualizar conta de origem');
       }
-
+      // atualiza a conta de destino
       updatedToAccount = await this.accountRepository.model.findByIdAndUpdate(
         input.toAccountId,
         { balance: this.toDecimal128(newToBalance) },
@@ -462,12 +436,18 @@ export class AccountService {
         session,
       });
       
-      await session.commitTransaction();
+      if (!isExternalTransaction) {
+        await session.commitTransaction();
+      }
     } catch (error) {
-      await session.abortTransaction();
+      if (!isExternalTransaction) {
+        await session.abortTransaction();
+      }
       throw error;
     } finally {
-      await session.endSession();
+      if (!isExternalTransaction) {
+        await session.endSession();
+      }
     }
 
     return {

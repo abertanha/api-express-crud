@@ -192,10 +192,12 @@ export class AccountController {
       });
 
       const result = await this.accountService.transfer({
-        fromAccountId,
-        toAccountId,
-        amount,
-        description,
+        input: {
+          fromAccountId,
+          toAccountId,
+          amount,
+          description,
+        }
       });
 
       return res.send_ok('Transferência realizada com sucesso',result);

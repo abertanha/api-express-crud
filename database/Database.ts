@@ -4,8 +4,6 @@ import is from '@zarco/isness'
 import { Print } from '../utilities/Print.ts'
 import { throwlhos } from '../globals/Throwlhos.ts'
 
-const print = new Print();
-
 export interface IDatabaseConnection {
   username: string;
   hostname: string;
@@ -20,14 +18,13 @@ export class Database {
 	private readonly printConnectionStringOnConnect = true;
 	private readonly print: Print;
 
-	private static connections = new Map<string, mongoose.Connection>();
-
 	constructor(
 		databaseConnection: IDatabaseConnection,
 		print: Print = new Print()
 		) {
-			console.info('[Database] Connection Params: ', databaseConnection);
-			this.print = print;
+			this.print = print
+			this.print.info('[Database] Connection Params: ', databaseConnection);
+			
 			this.hostname = databaseConnection.hostname
 			this.database = databaseConnection.database
 			this.username = databaseConnection.username
@@ -46,7 +43,9 @@ export class Database {
 				throw throwlhos.err_internalServerError('[Database] Please provide a database name!')
 			}
 			if (!this.password) {
-				throw throwlhos.err_internalServerError(`[Database] Please provide a database password for ${this.username}! Check .env file.`)
+				throw throwlhos.err_internalServerError(
+					`[Database] Please provide a database password for ${this.username}! Check .env file.`
+				)
 			}
 		}
 		
@@ -64,15 +63,17 @@ export class Database {
 		
 			mongoose.set('strictQuery', false);
 			 
-			const options = {
+			const options: mongoose.ConnectOptions = {
 				maxPoolSize: this.getMaxPoolSize(),
 				dbName: this.database,
 			};
 
-			const connection: Connection = mongoose.createConnection(this.connectionString, options as any);
+			const connection: Connection = mongoose.createConnection(this.connectionString, options);
 			
 			connection.on('connected', () => {
-				this.print.success(`[Database] Successfully connected to ${this.database} at ${this.hostname}`);
+				this.print.success(
+					`[Database] Successfully connected to ${this.database} at ${this.hostname}`
+				);
 			});
 
 			connection.on('error', (err: unknown) => {
@@ -82,8 +83,8 @@ export class Database {
 			return connection;
 		
 		} catch (error) {
-				this.print.error(`[Database] Error connecting to database: ${error}`);
-				throw error;
+			this.print.error(`[Database] Error connecting to database: ${error}`);
+			throw error;
 		} 
 	}
 
@@ -96,73 +97,12 @@ export class Database {
     })
 
     if (!is.number(defaultMaxPoolSize as any) || Number(defaultMaxPoolSize) <= 0) {
-      this.print.info(`[Database] Invalid default maxPoolSize value: ${defaultMaxPoolSize}, using 10.`)
+      this.print.info(
+				`[Database] Invalid default maxPoolSize value: ${defaultMaxPoolSize}, using 10.`
+			)
       return 10;
     }
 
     return Number(defaultMaxPoolSize);
   }
-	public static registerConnection(name: string, connection: mongoose.Connection): void {
-		if (Database.connections.has(name)) {
-			print.warn(`[Database] Connection '${name}' already registered. Skipping.`);
-			return;
-		}
-		Database.connections.set(name, connection);
-		print.info(`[Database] Connection '${name}' registered successfully.`);
-  }
-	public static getConnection(name: string): mongoose.Connection {
-		const connection = Database.connections.get(name);
-		if (!connection) {
-			throw new Error(
-				`[Database] Connection '${name}' not found. Available connections: ${Array.from(Database.connections.keys()).join(', ')}`
-			);
-		}
-		return connection;
-	}
-
-	public static async initializeNamed(
-		name: string, 
-		config: IDatabaseConnection
-	): Promise<mongoose.Connection> {
-
-		if (Database.connections.has(name)) {
-			print.info(`[Database] Connection '${name}' already initialized.`);
-			return Database.connections.get(name)!;
-		}
-
-		print.info(`[Database] Initializing connection '${name}'...`);
-		const db = new Database(config);
-		const connection: Connection = db.connect();
-		
-		await new Promise<void>((resolve, reject) => {
-			connection.once('connected', () => resolve());
-			connection.once('error', (err: unknown) => reject(err));
-		});
-
-		Database.registerConnection(name, connection);
-
-		return connection;
-	}
-
-	public static hasConnection(name: string): boolean {
-		return Database.connections.has(name);
-	}
-
-	public static listConnections(): string[] {
-		return Array.from(Database.connections.keys());
-	}
-
-	public static async closeAllConnections(): Promise<void> {
-		print.info('[Database] Closing all connections...');
-		const closePromises = Array.from(Database.connections.entries()).map(
-			([name, connection]) => {
-				return connection.close().then(() => {
-					print.info(`[Database] Connection '${name}' closed.`);
-				});
-			}
-		);
-		await Promise.all(closePromises);
-		Database.connections.clear();
-		print.info('[Database] All connections closed.');
-	}
 }
