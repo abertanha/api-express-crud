@@ -31,9 +31,7 @@ export class AccountController {
         { balance, rule: 'balance' }
       );
 
-      if (Env.local) {
-        this.print.info('[Account Controller] Criando conta:', { userId, type, balance });
-      }
+      this.logIfLocal('Recebido os dados: ', { userId, type, balance });
 
       const accountCreated = await this.accountService.create({
         userId,
@@ -51,6 +49,8 @@ export class AccountController {
     try {
       const { id } = req.params;
 
+      this.logIfLocal(`Recebido o id para buscar conta: ${id}`);
+
       const account = await this.accountService.findById(id);
 
       return res.send_ok('Conta encontrada',account);
@@ -67,6 +67,8 @@ export class AccountController {
         includeInactive: req.query.includeInactive === 'true'
       });
 
+      this.logIfLocal(`Listando usuários\npage: ${result.page}\n limit: ${result.limit}\nresult: ${result}`);
+
       return res.send_ok('Lista de contas recuperada',result);
     } catch (error) {
       next(error);
@@ -79,6 +81,8 @@ export class AccountController {
         userId: req.params.userId,
         includeInactive: req.query.includeInactive === 'true'
       });
+      
+      this.logIfLocal(`Recebido o id do usuário para buscar contas: ${accounts[0].userId}`);
 
       return res.send_ok('Contas do usuário recuperadas', accounts);
     } catch (error) {
@@ -89,6 +93,8 @@ export class AccountController {
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { type, balance } = req.body;
+
+      this.logIfLocal('Atualizando a conta:', { type, balance });
 
       if (type) this.accountRules.validate({ type, rule: 'type' });
       if (balance !== undefined) this.accountRules.validate({ balance });
@@ -113,6 +119,8 @@ export class AccountController {
     try {
       const { id } = req.params;
       const { amount, description } = req.body;
+
+      this.logIfLocal('Realizando depósito:', { id, amount, description });
 
       this.accountRules.validate(
         { amount, isRequiredField: true, rule: 'amount' }
@@ -140,6 +148,8 @@ export class AccountController {
     try {
       const { id } = req.params;
       const { amount, description } = req.body;
+
+      this.logIfLocal('Realizando o saque:', { id, amount, description });
 
       this.accountRules.validate(
         { amount, isRequiredField: true, rule: 'amount' }
@@ -175,13 +185,11 @@ export class AccountController {
         throw throwlhos.err_badRequest('Não é possível transferir para a mesma conta');
       }
 
-      if (Env.local) {
-        this.print.info('[Account Controller] Transferência:', {
-          fromAccountId,
-          toAccountId,
-          amount,
-        });
-      }
+      this.logIfLocal('Transferência: ', {
+        fromAccountId,
+        toAccountId,
+        amount,
+      });
 
       const result = await this.accountService.transfer({
         fromAccountId,
@@ -201,6 +209,8 @@ export class AccountController {
     try {
       const { id } = req.params;
 
+      this.logIfLocal('Consultando o saldo da conta: ', { id });
+
       const balance = await this.accountService.getBalance(id);
 
       return res.send_ok('Saldo consultado',{ balance });
@@ -212,6 +222,8 @@ export class AccountController {
   getUserTotalBalance = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
+
+      this.logIfLocal('Consultando o saldo das contas do usuário: ', { userId });
 
       const totalBalance = await this.accountService.getUserTotalBalance(userId);
 
@@ -228,6 +240,8 @@ export class AccountController {
       const { id } = req.params;
       const force = req.query.force === 'true';
 
+      this.logIfLocal('Desativando contas: ', { id });
+
       await this.accountService.deactivate({
         accountId: id,
         force: force
@@ -243,11 +257,18 @@ export class AccountController {
     try {
       const { id } = req.params;
 
+      this.logIfLocal('Reativando conta: ', { id });
+
       const reactivatedAccount = await this.accountService.reactivate({accountId: id});
 
       return res.send_created('Conta reativada com sucesso.', reactivatedAccount);
     } catch (error) {
       next(error);
     }
-  };
+  }
+  private logIfLocal(message: string, data?: any): void {
+    if (Env.local) {
+      this.print.info(message, data);
+    }
+  }
 }

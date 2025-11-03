@@ -32,6 +32,8 @@ export class TransactionController {
         return res.send_ok('Transação encontrada', fetchedTransaction);
       }
 
+      this.logIfLocal(`Encontrou transação\nid: ${transaction._id }\ntransação: ${transaction}`);
+
       return res.send_ok('Transação encontrada', transaction);
     } catch (error) {
       next(error);
@@ -51,15 +53,14 @@ export class TransactionController {
         limit,
       });
 
-      if (Env.local) {
-        this.print.info('Buscando transações:', { accountId, page, limit });
-      }
-
+      
       const result = await this.transactionService.findByAccountId({
         accountId,
         page,
         limit
       });
+      
+      this.logIfLocal(`Listando transações por conta\npage: ${page}\n limit: ${limit}\nresult: ${result}`);
 
       return res.send_ok('Transações recuperadas',result);
     } catch (error) {
@@ -77,9 +78,7 @@ export class TransactionController {
         type,
       });
 
-      if (Env.local) {
-        this.print.info('Filtrando por tipo:', { accountId, type });
-      }
+      this.logIfLocal('Filtrando por tipo:', { accountId, type });
 
       const transactions = await this.transactionService.findByAccountAndType({
         accountId: accountId,
@@ -101,9 +100,7 @@ export class TransactionController {
         accountId2,
       });
 
-      if (Env.local) {
-        this.print.info('Buscando transferências:', { accountId1, accountId2 });
-      };
+      this.logIfLocal(`Buscando transferências entre as contas:\nconta_1: ${ accountId1}\n conta_2:${accountId2 }`);
 
       const transactions = await this.transactionService.findBetweenAccounts({
         accountId1,
@@ -114,7 +111,7 @@ export class TransactionController {
     } catch (error) {
       next(error);
     }
-  };
+  }
 
   findAccountStats = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -122,9 +119,7 @@ export class TransactionController {
 
       this.transactionRules.validate({ accountId, isRequiredField: true, rule: 'objectId' });
 
-      if (Env.local) {
-        this.print.info('Buscando estatísticas:', { accountId });
-      }
+      this.logIfLocal('Buscando estatísticas da conta com id: ', { accountId });
 
       const stats = await this.transactionService.getAccountStats({accountId});
 
@@ -132,5 +127,10 @@ export class TransactionController {
     } catch (error) {
       next(error);
     }
-  };
+  }
+  private logIfLocal(message: string, data?: any): void {
+    if (Env.local) {
+      this.print.info(message, data);
+    }
+  }
 }

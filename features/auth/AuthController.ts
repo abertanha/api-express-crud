@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'npm:express'
 import { Print } from '../../utilities/Print.ts'
 import { AuthService } from './AuthService.ts'
+import { Env } from '../../config/Env.ts'
 
 export class AuthController {
   private readonly authService: AuthService
@@ -22,6 +23,8 @@ export class AuthController {
         return res.send_badRequest('Email e senha são obrigatórios')
       }
 
+      this.logIfLocal('Recebido dados para login: ', { email, password });
+
       const result = await this.authService.login({
         input:{
           email: email,
@@ -38,10 +41,13 @@ export class AuthController {
     try {
       const refreshTokenId = req.refreshTokenId
 
+      
       if(!refreshTokenId) {
         return res.send_badRequest('Refresh token não encontrado')
       }
-
+      
+      this.logIfLocal('Recebido dado para logout: ', { refreshTokenId });
+      
       await this.authService.logout({
         input: {
           refreshTokenId
@@ -58,6 +64,8 @@ export class AuthController {
       const { refreshTokenId } = req.body
 
       if(!refreshTokenId) return res.send_badRequest('Refresh token é obrigatório')
+      
+      this.logIfLocal('Recebido dado para refresh: ', { refreshTokenId });
 
       const result = await this.authService.refreshAccessToken({
         input:{
@@ -76,6 +84,10 @@ export class AuthController {
 
       if(!userId) return res.send_unauthorized('Usuário não autenticado')
       
+      this.logIfLocal('Recebido dado para encontrar dados do usuário: ',
+        { userId }
+      );
+
       const user = await this.authService.getUserById({
         input: {
           userId: userId
@@ -87,4 +99,10 @@ export class AuthController {
       next(error)
     }
   }
+
+  private logIfLocal(message: string, data?: any): void {
+      if (Env.local) {
+        this.print.info(message, data);
+      }
+    }
 }

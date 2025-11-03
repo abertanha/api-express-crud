@@ -107,7 +107,6 @@ export interface TokenPayload {
 export class AuthService {
   private readonly userRepository: UserRepository
   private readonly refreshTokenRepository: RefreshTokenRepository
-  private readonly print: Print
 
   constructor(
     userRepository: UserRepository = new UserRepository(),

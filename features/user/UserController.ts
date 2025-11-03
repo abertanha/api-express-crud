@@ -36,10 +36,7 @@ export class UserController {
         { password, isRequiredField: true, rule: 'password'},
       );
 
-      if (Env.local){
-        this.print.info(
-          'Recebido os dados: ', { name, email, cpf });
-      }
+      this.logIfLocal('Recebido os dados: ', { name, email, cpf });
 
       const userCreated = await this.userService.create({
         name,
@@ -59,8 +56,10 @@ export class UserController {
     try {
       const { id } = req.params;
 
+      this.logIfLocal(`Recebido o id para buscar usuário: ${id}`);
+      
       const user = await this.userService.findById({ id });
-
+      
       return res.send_ok('Usuário encontrado', user);
 
     } catch (error) {
@@ -70,12 +69,19 @@ export class UserController {
 
   findAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
+
+      const { page, limit } = req.pagination!
+      const includeInactive = req.query.includeInactive === 'true'
+
+      
       const result = await this.userService.findAll({
         page: req.pagination!.page,
         limit: req.pagination!.limit,
         includeInactive: req.query.includeInactive === 'true'
       })
-
+      
+      this.logIfLocal(`Listando usuários\npage: ${page}\n limit: ${limit}\nincludeInactive?: ${includeInactive}\nresult: ${result}`);
+      
       return res.send_ok('Lista de usuários recuperada',result);
     } catch (error) {
       next(error);
@@ -86,6 +92,8 @@ export class UserController {
     try {
       const { id } = req.params;
       const { name, email, birthDate } = req.body;
+
+      this.logIfLocal('Atualizando o usuário:', { id, name });
       
       this.userRules.validate(
         { name, isRequiredField: false, rule: 'name' },
@@ -109,6 +117,8 @@ export class UserController {
       const { id } = req.params;
       const force = req.query.force === 'true';
 
+      this.logIfLocal('desativando usuário:', { id });
+
       await this.softDeleteService.deactivate(id, force);
 
       return res.send_noContent('Usuário desativado com sucesso',null);
@@ -121,15 +131,19 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      if (Env.local) {
-        this.print.info('Reativando usuário:', { id });
-      }
+      this.logIfLocal('Reativando usuário:', { id });
 
       const reactivatedUser = await this.userService.reactivate({id});
 
       return res.send_created('Usuário reativado com sucesso',reactivatedUser);
     } catch (error) {
       next(error);
+    }
+  }
+
+  private logIfLocal(message: string, data?: any): void {
+    if (Env.local) {
+      this.print.info(message, data);
     }
   }
 }
