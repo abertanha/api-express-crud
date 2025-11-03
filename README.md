@@ -14,7 +14,8 @@ pelo Atlas da MongoDB.
 - CRUD básico para usuários
 - Operações Financeiras (Deposito, Saque e Transferência)
 - Autenticação baseada em identidade do usuário (JWT)
-- Criação e gerenciamento de conta bancária, autorização baseada em propriedade(PBAC)
+- Criação e gerenciamento de conta bancária, autorização baseada em propriedade de dados (DOBAC)
+- Registro das transações realizadas pensado para auditorias
 
 ## Como executar
 - clone esse repo
@@ -32,7 +33,7 @@ pelo Atlas da MongoDB.
 - Instale dependências
     ```bash
     deno install
-    # Execute
+    # Para iniciar o servidor
     deno run dev
     ```
 - Execute testes    
@@ -42,8 +43,10 @@ pelo Atlas da MongoDB.
 - Gerar relatório de cobertura
     ```bash
     deno run test:coverage
-    # Visualizar relatório
+    # Para visualizar relatório
     deno coverage coverage/
+    # Para visualizar relatório dos controllers
+    deno coverage coverage/ | grep controller
     ```
 ## Rotas do sistema
 ## API Endpoints
@@ -59,7 +62,7 @@ pelo Atlas da MongoDB.
 
 ### Users (`/api/users`)
 
-| Método | Rota | Auth | Ownership | Descrição |
+| Método | Rota | Auth | DOBAC | Descrição |
 |--------|------|------|-----------|-----------|
 | `POST` | `/` | ❌ | - | Cria novo usuário (registro público) |
 | `GET` | `/` | ✅ | - | Lista usuários com paginação |
@@ -70,7 +73,7 @@ pelo Atlas da MongoDB.
 
 ### Accounts (`/api/accounts`)
 
-| Método | Rota | Auth | Ownership | Descrição |
+| Método | Rota | Auth | DOBAC | Descrição |
 |--------|------|------|-----------|-----------|
 | `POST` | `/` | ✅ | - | Cria nova conta bancária |
 | `GET` | `/` | ✅ | - | Lista contas do usuário logado |
@@ -87,7 +90,7 @@ pelo Atlas da MongoDB.
 
 ### Transactions (`/api/transactions`)
 
-| Método | Rota | Auth | Ownership | Descrição |
+| Método | Rota | Auth | DOBAC | Descrição |
 |--------|------|------|-----------|-----------|
 | `GET` | `/:id` | ✅ | ✅ | Busca transação por ID |
 | `GET` | `/account/:accountId` | ✅ | ✅ | Lista transações de uma conta |
@@ -99,4 +102,4 @@ pelo Atlas da MongoDB.
 - ✅ = Requerido
 - ❌ = Não requerido
 - **Auth** = Autenticação JWT
-- **Ownership** = Validação de propriedade (PBAC)
+- **DOBAC** = Validação de propriedade (_Data Ownership Base Access Control_)
