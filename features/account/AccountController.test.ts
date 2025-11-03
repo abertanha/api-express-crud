@@ -5,7 +5,6 @@ import { MockAccountService } from './mocks/MockAccountService.ts';
 import { MockResponser, MockNextFunction } from '../../globals/Stubs.ts';
 import { AccountRules } from './AccountRules.ts';
 import { Print } from '../../utilities/Print.ts';
-import { Database } from '../../database/Database.ts';
 
 function setupTest() {
   const mockAccountService = new MockAccountService();

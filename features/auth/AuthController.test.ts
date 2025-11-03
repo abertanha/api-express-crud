@@ -4,7 +4,6 @@ import { AuthController } from './AuthController.ts';
 import { MockAuthService } from './mocks/MockAuthService.ts';
 import { MockResponser, MockNextFunction } from '../../globals/Stubs.ts';
 import { Print } from '../../utilities/Print.ts';
-import { Database } from '../../database/Database.ts';
 
 function setupTest() {
   const mockAuthService = new MockAuthService();

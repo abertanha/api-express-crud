@@ -6,7 +6,6 @@ import { MockResponser, MockNextFunction } from '../../globals/Stubs.ts';
 import { UserRules } from './UserRules.ts';
 import { Print } from '../../utilities/Print.ts';
 import { Types } from 'mongoose';
-import { Database } from '../../database/Database.ts';
 import { MockSoftDeleteService } from './mocks/MockSoftDeleteService.ts'
 
 function setupTest() {

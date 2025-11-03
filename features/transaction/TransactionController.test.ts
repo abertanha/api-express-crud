@@ -4,7 +4,6 @@ import { TransactionRules } from "./TransactionRules.ts";
 import { Print } from "../../utilities/Print.ts";
 import { MockResponser, MockNextFunction } from "../../globals/Stubs.ts";
 import { assertExists } from "@std/assert";
-import { Database } from "../../database/Database.ts";
 
 function setupTest() {
   const mockTransactionService = new MockTransactionService();
