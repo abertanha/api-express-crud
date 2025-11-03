@@ -40,11 +40,16 @@ Deno.test({
   assertExists(MockResponser.send_ok);
 }});
 
-Deno.test('AuthController - login - deve falhar sem email (teste negativo)', async () => {
-  const { authController } = setupTest();
-  const mockRequest = { body: { password: 'password123' } } as Request;
-  await authController.login(mockRequest as any, MockResponser, MockNextFunction);
-  assertExists(MockResponser.send_badRequest);
+Deno.test({
+  name: 'AuthController - login - deve falhar sem email (teste negativo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { authController } = setupTest();
+    const mockRequest = { body: { password: 'password123' } } as Request;
+    await authController.login(mockRequest as any, MockResponser, MockNextFunction);
+    assertExists(MockResponser.send_badRequest);
+  }
 });
 
 Deno.test('AuthController - login - deve falhar sem password (teste negativo)', async () => {
@@ -54,12 +59,17 @@ Deno.test('AuthController - login - deve falhar sem password (teste negativo)', 
   assertExists(MockResponser.send_badRequest);
 });
 
-Deno.test('AuthController - login - deve falhar com credenciais inválidas (teste negativo)', async () => {
-  const { authController } = setupTest();
-  const mockRequest = { body: { email: 'joao.silva@example.com', password: 'wrongpass' } } as Request;
-  let errorCaught: any = null;
-  await authController.login(mockRequest as any, MockResponser, (error: any) => { errorCaught = error; });
-  assertExists(errorCaught);
+Deno.test({
+  name: 'AuthController - login - deve falhar com credenciais inválidas (teste negativo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { authController } = setupTest();
+    const mockRequest = { body: { email: 'joao.silva@example.com', password: 'wrongpass' } } as Request;
+    let errorCaught: any = null;
+    await authController.login(mockRequest as any, MockResponser, (error: any) => { errorCaught = error; });
+    assertExists(errorCaught);
+  }
 });
 
 Deno.test('AuthController - login - deve falhar com usuário desativado (teste negativo)', async () => {
@@ -86,11 +96,16 @@ Deno.test('AuthController - logout - deve falhar sem refreshTokenId (teste negat
 });
 
 // REFRESH
-Deno.test('AuthController - refresh - deve renovar token com sucesso (teste positivo)', async () => {
-  const { authController } = setupTest();
-  const mockRequest = { body: { refreshTokenId: '608f1f77bcf86cd799439011' } } as Request;
-  await authController.refresh(mockRequest as any, MockResponser, MockNextFunction);
-  assertExists(MockResponser.send_ok);
+Deno.test({
+  name:'AuthController - refresh - deve renovar token com sucesso (teste positivo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { authController } = setupTest();
+    const mockRequest = { body: { refreshTokenId: '608f1f77bcf86cd799439011' } } as Request;
+    await authController.refresh(mockRequest as any, MockResponser, MockNextFunction);
+    assertExists(MockResponser.send_ok);
+  }
 });
 
 Deno.test('AuthController - refresh - deve falhar sem refreshTokenId (teste negativo)', async () => {
@@ -100,12 +115,17 @@ Deno.test('AuthController - refresh - deve falhar sem refreshTokenId (teste nega
   assertExists(MockResponser.send_badRequest);
 });
 
-Deno.test('AuthController - refresh - deve falhar com refresh expirado (teste negativo)', async () => {
-  const { authController } = setupTest();
-  const mockRequest = { body: { refreshTokenId: '608f1f77bcf86cd799439013' } } as Request;
-  let errorCaught: any = null;
-  await authController.refresh(mockRequest as any, MockResponser, (error: any) => { errorCaught = error; });
-  assertExists(errorCaught);
+Deno.test({
+  name: 'AuthController - refresh - deve falhar com refresh expirado (teste negativo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { authController } = setupTest();
+    const mockRequest = { body: { refreshTokenId: '608f1f77bcf86cd799439013' } } as Request;
+    let errorCaught: any = null;
+    await authController.refresh(mockRequest as any, MockResponser, (error: any) => { errorCaught = error; });
+    assertExists(errorCaught);
+  }
 });
 
 // ME

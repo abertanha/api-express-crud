@@ -125,7 +125,7 @@ export class UserController {
         this.print.info('Reativando usuário:', { id });
       }
 
-      const reactivatedUser = await this.userService.reactivate(id);
+      const reactivatedUser = await this.userService.reactivate({id});
 
       return res.send_created('Usuário reativado com sucesso',reactivatedUser);
     } catch (error) {

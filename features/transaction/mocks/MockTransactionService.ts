@@ -19,38 +19,38 @@ export class MockTransactionService extends TransactionService {
     );
   }
 
-  override async findById(id: string) {
+  override findById(input: TransactionService.FindById.Input): Promise<TransactionService.FindById.Output> {
     if (this.shouldThrowError) {
       throw new Error("Mock error in findById");
     }
-    return super.findById(id);
+    return super.findById(input);
   }
 
-  override async findByAccountId(accountId: string, page: number, limit: number) {
+  override findByAccountId(input: TransactionService.FindByAccountId.Input): Promise<TransactionService.FindByAccountId.Output> {
     if (this.shouldThrowError) {
       throw new Error("Mock error in findByAccountId");
     }
-    return super.findByAccountId(accountId, page, limit);
+    return super.findByAccountId(input);
   }
 
-  override async findByAccountAndType(accountId: string, type: any) {
+  override findByAccountAndType(input: TransactionService.FindByAccountAndType.Input): Promise<TransactionService.FindByAccountAndType.Output> {
     if (this.shouldThrowError) {
       throw new Error("Mock error in findByAccountAndType");
     }
-    return super.findByAccountAndType(accountId, type);
+    return super.findByAccountAndType(input);
   }
 
-  override async findBetweenAccounts(accountId1: string, accountId2: string) {
+  override findBetweenAccounts(input: TransactionService.FindBetweenAccounts.Input): Promise<TransactionService.FindBetweenAccounts.Output> {
     if (this.shouldThrowError) {
       throw new Error("Mock error in findBetweenAccounts");
     }
-    return super.findBetweenAccounts(accountId1, accountId2);
+    return super.findBetweenAccounts(input);
   }
 
-  override async getAccountStats(accountId: string) {
+  override getAccountStats(input: TransactionService.GetAccountStats.Input): Promise<TransactionService.GetAccountStats.Output> {
     if (this.shouldThrowError) {
       throw new Error("Mock error in getAccountStats");
     }
-    return super.getAccountStats(accountId);
+    return super.getAccountStats(input);
   }
 }

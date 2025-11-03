@@ -159,7 +159,6 @@ export namespace AccountService {
 
     export type Output = TAccountSanitized
   }
-
 }
 
 // export interface CreateAccountDTO {
@@ -562,7 +561,6 @@ export class AccountService {
 
     return this.sanitize(reactivatedAccount!);
   }
-
   private sanitize(account: any): AccountService.TAccountSanitized {
     const accountObj = account.toObject ? account.toObject() : account;
 

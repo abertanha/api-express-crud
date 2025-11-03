@@ -28,9 +28,9 @@ export class SoftDeleteService {
     }
     
     if (!force) {
-      const hasBalance = await this.accountService.userHasBalance(id);
+      const hasBalance = await this.accountService.userHasBalance({userId: id});
       if (hasBalance) {
-        const totalBalance = await this.accountService.getUserTotalBalance(id);
+        const totalBalance = await this.accountService.getUserTotalBalance({userId: id });
         throw throwlhos.err_badRequest(
           'Não é possível desativar usuário com saldo em contas. Esvazie as contas primeiro ou use force=true',
           { 
@@ -42,7 +42,14 @@ export class SoftDeleteService {
       }
     }
 
-    await this.accountService.deactivateAllAccountsByUserId(id);
+    const userAccounts = await this.accountService.findByUserId({ userId: id, includeInactive: false });
+    
+    for (const account of userAccounts) {
+      await this.accountService.deactivate({ 
+        accountId: account._id, 
+        force: true
+      });
+    }
     this.print.sucess(`Contas do usuário ${user.name} (${id}) desativadas`);
 
     await this.userRepository.updateById(id, { isActive: false });

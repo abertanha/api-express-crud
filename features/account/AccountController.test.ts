@@ -21,7 +21,6 @@ function setupTest() {
   return { accountController };
 }
 
-// Registra cleanup global para fechar conexões após todos os testes
 let cleanupRegistered = false;
 if (!cleanupRegistered) {
   cleanupRegistered = true;
@@ -31,8 +30,8 @@ if (!cleanupRegistered) {
 }
 
 // CREATE
-Deno.test(
-  {name:'AccountController - create - deve criar conta com sucesso (teste positivo)',
+Deno.test({
+  name:'AccountController - create - deve criar conta com sucesso (teste positivo)',
   sanitizeOps: false,
   sanitizeResources: false,
   fn:async () => {
@@ -75,19 +74,29 @@ Deno.test('AccountController - create - deve falhar com saldo negativo (teste ne
 });
 
 // FINDBYID
-Deno.test('AccountController - findById - deve buscar conta por ID (teste positivo)', async () => {
-  const { accountController } = setupTest();
-  const mockRequest = { params: { id: '607f1f77bcf86cd799439021' } } as any as Request;
-  await accountController.findById(mockRequest, MockResponser, MockNextFunction);
-  assertExists(MockResponser.send_ok);
+Deno.test({
+  name: 'AccountController - findById - deve buscar conta por ID (teste positivo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { accountController } = setupTest();
+    const mockRequest = { params: { id: '607f1f77bcf86cd799439021' } } as any as Request;
+    await accountController.findById(mockRequest, MockResponser, MockNextFunction);
+    assertExists(MockResponser.send_ok);
+  }
 });
 
-Deno.test('AccountController - findById - deve falhar com conta não encontrada (teste negativo)', async () => {
-  const { accountController } = setupTest();
-  const mockRequest = { params: { id: '607f1f77bcf86cd799999999' } } as any as Request;
-  let errorCaught: any = null;
-  await accountController.findById(mockRequest, MockResponser, (error: any) => { errorCaught = error; });
-  assertExists(errorCaught);
+Deno.test({
+  name: 'AccountController - findById - deve falhar com conta não encontrada (teste negativo)',
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { accountController } = setupTest();
+    const mockRequest = { params: { id: '607f1f77bcf86cd799999999' } } as any as Request;
+    let errorCaught: any = null;
+    await accountController.findById(mockRequest, MockResponser, (error: any) => { errorCaught = error; });
+    assertExists(errorCaught);
+  }
 });
 
 // FINDALL

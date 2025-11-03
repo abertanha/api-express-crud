@@ -46,19 +46,24 @@ Deno.test({
   assertExists(MockResponser.send_ok);
 }});
 
-Deno.test("TransactionController - findById - ID inválido", async () => {
-  const { transactionController } = setupTest();
-  
-  const req = {
-    params: { id: "invalid-id" }
-  } as any;
+Deno.test({
+  name: "TransactionController - findById - ID inválido",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { transactionController } = setupTest();
+    
+    const req = {
+      params: { id: "invalid-id" }
+    } as any;
 
-  let errorCaught: any = null;
-  await transactionController.findById(req, MockResponser as any, (error: any) => {
-    errorCaught = error;
-  });
+    let errorCaught: any = null;
+    await transactionController.findById(req, MockResponser as any, (error: any) => {
+      errorCaught = error;
+    });
 
-  assertExists(errorCaught);
+    assertExists(errorCaught);
+  }
 });
 
 Deno.test("TransactionController - findById - ID vazio", async () => {
@@ -89,7 +94,11 @@ Deno.test("TransactionController - findById - transação não encontrada", asyn
 });
 
 // ===== FIND BY ACCOUNT ID =====
-Deno.test("TransactionController - findByAccountId - sucesso", async () => {
+Deno.test({
+  name: "TransactionController - findByAccountId - sucesso",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
   const { transactionController } = setupTest();
   
   const req = {
@@ -100,19 +109,25 @@ Deno.test("TransactionController - findByAccountId - sucesso", async () => {
   await transactionController.findByAccountId(req, MockResponser as any, MockNextFunction);
 
   assertExists(MockResponser.send_ok);
+  }
 });
 
-Deno.test("TransactionController - findByAccountId - sem query params usa defaults", async () => {
-  const { transactionController } = setupTest();
-  
-  const req = {
-    params: { accountId: "607f191e5f1b2c9234567021" },
-    query: {}
-  } as any;
+Deno.test({
+  name: "TransactionController - findByAccountId - sem query params usa defaults",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
+    const { transactionController } = setupTest();
+    
+    const req = {
+      params: { accountId: "607f191e5f1b2c9234567021" },
+      query: {}
+    } as any;
 
-  await transactionController.findByAccountId(req, MockResponser as any, MockNextFunction);
+    await transactionController.findByAccountId(req, MockResponser as any, MockNextFunction);
 
-  assertExists(MockResponser.send_ok);
+    assertExists(MockResponser.send_ok);
+  }
 });
 
 Deno.test("TransactionController - findByAccountId - erro no service", async () => {
