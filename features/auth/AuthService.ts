@@ -2,7 +2,6 @@ import { scryptSync } from 'node:crypto'
 import { throwlhos } from '../../globals/Throwlhos.ts'
 import { RefreshTokenRepository } from '../../models/RefreshToken/RefreshTokenRepository.ts'
 import { UserRepository } from '../../models/User/UserRepository.ts'
-import { Print } from '../../utilities/Print.ts'
 import { Buffer } from "node:buffer";
 import jwt from 'npm:jsonwebtoken';
 import { Env } from '../../config/Env.ts';
@@ -80,22 +79,22 @@ export namespace AuthService {
   }
 }
 
-export interface LoginDTO {
-  email: string
-  password: string
-}
+// export interface LoginDTO {
+//   email: string
+//   password: string
+// }
 
-export interface AuthResponseDTO {
-  token: string
-  refreshToken: string
-  user: {
-    _id: string
-    name: string
-    email: string
-    cpf: string
-  }
-  expiresIn: string
-}
+// export interface AuthResponseDTO {
+//   token: string
+//   refreshToken: string
+//   user: {
+//     _id: string
+//     name: string
+//     email: string
+//     cpf: string
+//   }
+//   expiresIn: string
+// }
 
 export interface TokenPayload {
   id: string
@@ -111,11 +110,9 @@ export class AuthService {
   constructor(
     userRepository: UserRepository = new UserRepository(),
     refreshTokenRepository: RefreshTokenRepository = new RefreshTokenRepository(),
-    print: Print = new Print()
   ) {
     this.userRepository = userRepository;
     this.refreshTokenRepository = refreshTokenRepository
-    this.print = print
   }
   async login(params: AuthService.Login.Input): Promise<AuthService.Login.Output> {
     const { email, password } = params.input

@@ -56,7 +56,7 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      this.logIfLocal(`Recebido o id para buscar usuário: ${id}`);
+      this.logIfLocal(`Recebido o id para buscar usuário: ${id}user}`);
       
       const user = await this.userService.findById({ id });
       
@@ -101,10 +101,13 @@ export class UserController {
         { birthDate, isRequiredField: false, rule: 'birthDate' }
       );
 
-      const updatedUser = await this.userService.update(id, {
-        name,
-        email,
-        birthDate
+      const updatedUser = await this.userService.update({
+        id,
+        data: {
+          name,
+          email,
+          birthDate
+        }
       });
 
       return res.send_partialContent('Usuário atualizado com sucesso', updatedUser);

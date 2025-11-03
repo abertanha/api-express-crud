@@ -3,28 +3,22 @@ import { MockAuthRepository } from './MockAuthRepository.ts';
 import { RefreshTokenRepository } from '../../../models/RefreshToken/RefreshTokenRepository.ts';
 import { MockUserRepository } from '../../user/mocks/MockUserRepository.ts';
 import { UserRepository } from '../../../models/User/UserRepository.ts';
-import { Print } from '../../../utilities/Print.ts';
-
-export class MockPrint extends Print {
-  override sucess(_message: string) {}
-  override error(_message: string, _error?: any) {}
-}
 
 export class MockAuthService extends AuthService {
   constructor() {
     super(
       new MockUserRepository() as unknown as UserRepository,
       new MockAuthRepository() as unknown as RefreshTokenRepository,
-      new MockPrint()
     );
   }
 
-  override async login(data: { email: string; password: string }) {
-    const user = await (this as any).userRepository.findOne({ email: data.email }).exec();
+  override async login(params: AuthService.Login.Input): Promise<AuthService.Login.Output> {
+    const { email, password } = params.input
+    const user = await (this as any).userRepository.findOne({ email }).exec();
     if (!user) throw { code: 401, status: 'UNAUTHORIZED', message: 'Email ou senha incorretos' };
     if (!user.isActive) throw { code: 403, status: 'FORBIDDEN', message: 'Usuário desativado' };
     
-    if (data.password !== 'password123') throw { code: 401, status: 'UNAUTHORIZED', message: 'Email ou senha incorretos' };
+    if (password !== 'password123') throw { code: 401, status: 'UNAUTHORIZED', message: 'Email ou senha incorretos' };
 
     const refreshToken = await (this as any).refreshTokenRepository.createOne({
       userId: user._id,
@@ -45,11 +39,13 @@ export class MockAuthService extends AuthService {
     };
   }
 
-  override async logout(refreshTokenId: string): Promise<void> {
+  override async logout(params: AuthService.Logout.Input): Promise<AuthService.Logout.Output> {
+    const { refreshTokenId } = params.input
     await (this as any).refreshTokenRepository.deleteById(refreshTokenId);
   }
 
-  override async refreshAccessToken(refreshTokenId: string): Promise<{ token: string; expiresIn: string }> {
+  override async refreshAccessToken(params: AuthService.RefreshAccessToken.Input): Promise<AuthService.RefreshAccessToken.Output> {
+    const { refreshTokenId } = params.input
     const refresh = await (this as any).refreshTokenRepository.findById(refreshTokenId).exec();
     if (!refresh) throw { code: 401, status: 'UNAUTHORIZED', message: 'Refresh token inválido' };
     if (refresh.hasExpired) {

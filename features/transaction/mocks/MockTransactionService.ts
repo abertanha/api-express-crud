@@ -1,13 +1,6 @@
 import { TransactionService } from '../TransactonService.ts';
 import { MockTransactionRepository } from './MockTransactionRepository.ts';
 import { TransactionRepository } from '../../../models/Transaction/TransactionRepository.ts';
-import { Print } from '../../../utilities/Print.ts';
-
-export class MockPrint extends Print {
-  override sucess(_message: string) {}
-  override error(_message: string, _error?: any) {}
-  override info(_message: string, _data?: any) {}
-}
 
 export class MockTransactionService extends TransactionService {
   shouldThrowError = false;
@@ -15,7 +8,6 @@ export class MockTransactionService extends TransactionService {
   constructor() {
     super(
       new MockTransactionRepository() as unknown as TransactionRepository,
-      new MockPrint()
     );
   }
 

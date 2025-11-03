@@ -51,7 +51,7 @@ export class AccountController {
 
       this.logIfLocal(`Recebido o id para buscar conta: ${id}`);
 
-      const account = await this.accountService.findById(id);
+      const account = await this.accountService.findById({id});
 
       return res.send_ok('Conta encontrada',account);
     } catch (error) {
@@ -63,7 +63,7 @@ export class AccountController {
     try {
       const result = await this.accountService.findAll({
         page: req.pagination!.page,
-        limit: req.pagiation!.limit,
+        limit: req.pagination!.limit,
         includeInactive: req.query.includeInactive === 'true'
       });
 
@@ -211,7 +211,7 @@ export class AccountController {
 
       this.logIfLocal('Consultando o saldo da conta: ', { id });
 
-      const balance = await this.accountService.getBalance(id);
+      const balance = await this.accountService.getBalance({accountId: id});
 
       return res.send_ok('Saldo consultado',{ balance });
     } catch (error) {
@@ -225,7 +225,7 @@ export class AccountController {
 
       this.logIfLocal('Consultando o saldo das contas do usuário: ', { userId });
 
-      const totalBalance = await this.accountService.getUserTotalBalance(userId);
+      const totalBalance = await this.accountService.getUserTotalBalance({userId});
 
       return res.send_ok('Saldo consultado',  { totalBalance });
     } catch (error) {

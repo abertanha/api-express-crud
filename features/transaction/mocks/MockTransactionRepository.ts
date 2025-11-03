@@ -122,14 +122,20 @@ export class MockTransactionRepository {
   }
 
   findById(id: string): any {
-    const objectId = new Types.ObjectId(id);
-    const transaction = this.mockData.find((t) => t._id?.equals(objectId)) || null;
-    return {
-      lean: () => ({
-        exec: () => Promise.resolve(transaction)
-      })
-    };
-  }
+  const objectId = new Types.ObjectId(id);
+  const transaction = this.mockData.find((t) => t._id?.equals(objectId)) || null;
+  
+  return {
+    lean: () => ({
+      exec: () => {
+        if (transaction) {
+          return Promise.resolve({ ...transaction, toObject: () => ({ ...transaction }) });
+        }
+        return Promise.resolve(null);
+      }
+    })
+  };
+}
 
   updateOne(filter: FilterQuery<ITransaction>, update: UpdateQuery<ITransaction>): Promise<any> {
     const transactionIndex = this.mockData.findIndex((t) => {

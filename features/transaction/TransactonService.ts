@@ -3,7 +3,7 @@ import { TransactionType } from '../../models/Transaction/ITransaction.ts';
 import { Types } from 'mongoose';
 import is from '@zarco/isness'
 import { ClientSession } from 'mongoose'
-import { Print } from '../../utilities/Print.ts'
+import { throwlhos } from '../../globals/Throwlhos.ts';
 
 export namespace TransactionService {
   export type TTransactionSanitized = {
@@ -108,41 +108,12 @@ export namespace TransactionService {
   }
 }
 
-// export interface CreateTransactionDTO {
-//   accountId: string;
-//   type: TransactionType;
-//   amount: number;
-//   description?: string;
-//   balanceBefore?: number;
-//   balanceAfter?: number;
-//   relatedAccountId?: string;
-//   relatedTransactionId?: string;
-//   session?: ClientSession
-// }
-
-// export interface TransactionResponseDTO {
-//   _id?: string;
-//   accountId: string;
-//   type: TransactionType;
-//   amount: number;
-//   description?: string;
-//   balanceBefore: number;
-//   balanceAfter: number;
-//   relatedAccountId?: string;
-//   relatedTransactionId?: string;
-//   createdAt?: Date;
-//   updatedAt?: Date;
-// }
-
 export class TransactionService {
   private readonly transactionRepository: TransactionRepository;
-  private readonly print: Print;
 
   constructor(
     transactionRepository: TransactionRepository = new TransactionRepository(),
-    print: Print = new Print()
   ) {
-    this.print = print;
     this.transactionRepository = transactionRepository;
   }
 
@@ -170,10 +141,6 @@ export class TransactionService {
       ? (await this.transactionRepository.model.create([transactionData],{ session: input.session }))[0]
       : await this.transactionRepository.model.create(transactionData);
 
-    this.print.sucess(
-      `Transação registrada: ${input.type} - R$ ${input.amount.toFixed(2)}`
-    );
-
     return this.sanitize(transaction);
   }
 
@@ -182,6 +149,10 @@ export class TransactionService {
     .findById(input.id)
     .lean()
     .exec()
+
+    if (!transaction) {
+      throw throwlhos.err_notFound('Transação não encontrada', { id: input.id });
+    }
     
     return this.sanitize(transaction)
   }

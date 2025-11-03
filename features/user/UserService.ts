@@ -141,15 +141,14 @@ export class UserService {
     })
   }
   async update(
-    input: UserService.Update.Input,
-    data: Partial<Pick<IUser, 'name' | 'email' | 'birthDate'>>
+    input: UserService.Update.Input
   ): Promise<UserService.Update.Output> {
     const userExists = await this.userRepository.exists({ _id: input.id });
     if (!userExists) throw throwlhos.err_notFound('Usuário não encontrando', { id: input.id });
 
-    if (data.email) {
+    if (input.data.email) {
       const emailExists = await this.userRepository.findOne({
-        email: data.email,
+        email: input.data.email,
         _id: { $ne: input.id }
       });
       if (emailExists) throw throwlhos.err_conflict('Email já cadastrado', { email: input.data.email });
