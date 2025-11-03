@@ -7,17 +7,21 @@ import { UserRules } from './UserRules.ts';
 import { Print } from '../../utilities/Print.ts';
 import { Types } from 'mongoose';
 import { Database } from '../../database/Database.ts';
+import { MockSoftDeleteService } from './mocks/MockSoftDeleteService.ts'
 
 function setupTest() {
   const mockUserService = new MockUserService();
   const mockUserRules = new UserRules();
   const mockPrint = new Print();
-  const userController = new UserController(mockUserService, mockUserRules, mockPrint);
+  const mockSoftDeleteService = new MockSoftDeleteService();
+  const userController = new UserController(mockUserService, mockUserRules, mockPrint, mockSoftDeleteService as any);
   
   const repository = mockUserService['userRepository'] as any;
   if (repository && repository.resetMockData) {
     repository.resetMockData();
   }
+
+  mockSoftDeleteService.resetMockData();
   
   return { userController, mockUserService, mockUserRules, mockPrint };
 }
