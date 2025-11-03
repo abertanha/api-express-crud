@@ -8,42 +8,195 @@ import { TransactionService } from '../transaction/TransactonService.ts'
 import { Print } from '../../utilities/Print.ts'
 import { startBankingSession } from '../../database/db/bankingDB.ts'
 
+export namespace AccountService {
+  export type TAccountSanitized = {
+    _id:string
+    accNumber: number
+    balance: number
+    type: "poupança" | "corrente"
+    userId: {
+      _id: string
+      name: string
+      email: string
+      cpf: string
+    } | string
+    isActive: boolean
+    createdAt?: Date
+    updatedAt?: Date
+  }
 
-export interface CreateAccountDTO {
-  balance?: number;
-  type: 'poupança' | 'corrente';
-  userId: string;
-};
+  export type TAccountWithTransaction = {
+    account: TAccountSanitized
+    transaction: any
+  }
+  export type TTransferResult = {
+    fromAccount: TAccountSanitized
+    toAccount: TAccountSanitized
+    transactions: {
+      transferOut: any
+      transferIn: any
+    }
+  }
+  export namespace Create {
+    export type Input = {
+      balance?: number
+      type: 'poupança' | 'corrente'
+      userId: string
+    }
 
-export interface AccountResponseDTO {
-  _id?: string;
-  accNumber: number;
-  balance: number;
-  type: 'poupança' | 'corrente';
-  userId: {
-    _id: string;
-    name: string;
-    email:string;
-    cpf: string;
-  } | string;
-  isActive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+    export type Output = TAccountSanitized
+  }
 
-export interface TransactionDTO {
-  accountId: string;
-  amount: number;
-  type: 'credit' | 'debit' | 'transfer';
-  description?: string;
-};
+  export namespace FindById {
+    export type Input = { 
+      id: string
+    }
 
-export interface TransferDTO {
-  fromAccountId: string;
-  toAccountId: string;
-  amount: number;
-  description?: string;
-};
+    export type Output = TAccountSanitized
+  }
+
+  export namespace FindAll {
+    export type Input = {
+      page?: number
+      limit?: number
+      includeInactive?: boolean
+    }
+
+    export type Output = { 
+      docs: TAccountSanitized[]
+      totalDocs: number
+      limit: number
+      page: number
+      totalPages: number
+      hasNextPage: boolean
+      hasPrevPage: boolean
+    }
+  }
+
+  export namespace FindByUserId {
+    export type Input = {
+      userId: string
+      includeInactive?: boolean
+    }
+
+    export type Output = TAccountSanitized[]
+  }
+  export namespace Update {
+    export type Input = { 
+      id: string
+      data: Partial<Pick<IAccount, 'balance' | 'type'>>
+    }
+
+    export type Output = TAccountSanitized
+  }
+  export namespace Deposit {
+    export type Input = { 
+      accountId: string
+      amount: number
+      description?: string
+    }
+
+    export type Output = TAccountWithTransaction
+  }
+
+  export namespace Withdraw {
+    export type Input = {
+      accountId: string
+      amount: number
+      description?: string
+    }
+
+    export type Output = TAccountWithTransaction
+  }
+
+  export namespace Transfer {
+    export type Input = {
+      fromAccountId: string
+      toAccountId: string
+      amount: number
+      description?: string
+    }
+
+    export type Output = TTransferResult
+  }
+  export namespace GetBalance {
+    export type Input = {
+      accountId: string
+    }
+
+    export type Output = number
+  }
+
+  export namespace UserHasBalance {
+    export type Input = {
+      userId: string
+    }
+
+    export type Output = boolean
+  }
+
+  export namespace GetUserTotalBalance {
+    export type Input = {
+      userId: string
+    }
+
+    export type Output = number
+  }
+
+  export namespace Deactivate {
+    export type Input = {
+      accountId: string
+      force?: boolean
+    }
+
+    export type Output = void
+  }
+
+  export namespace Reactivate {
+    export type Input = {
+      accountId: string
+    }
+
+    export type Output = TAccountSanitized
+  }
+
+}
+
+// export interface CreateAccountDTO {
+//   balance?: number;
+//   type: 'poupança' | 'corrente';
+//   userId: string;
+// };
+
+// export interface AccountResponseDTO {
+//   _id?: string;
+//   accNumber: number;
+//   balance: number;
+//   type: 'poupança' | 'corrente';
+//   userId: {
+//     _id: string;
+//     name: string;
+//     email:string;
+//     cpf: string;
+//   } | string;
+//   isActive: boolean;
+//   createdAt?: Date;
+//   updatedAt?: Date;
+// };
+
+// export interface TransactionDTO {
+//   accountId: string;
+//   amount: number;
+//   type: 'credit' | 'debit' | 'transfer';
+//   description?: string;
+// };
+
+// export interface TransferDTO {
+//   fromAccountId: string;
+//   toAccountId: string;
+//   amount: number;
+//   description?: string;
+// };
 
 export class AccountService {
   private readonly accountRepository: AccountRepository;
@@ -63,19 +216,19 @@ export class AccountService {
     this.userService = userService; 
   }
   // crud
-  async create(data: CreateAccountDTO): Promise<AccountResponseDTO>{
-    const userExists = await this.userService.findById(data.userId.toString());
+  async create(input: AccountService.Create.Input): Promise<AccountService.Create.Output>{
+    const userExists = await this.userService.findById({id: input.userId.toString() });
     if (!userExists) throw throwlhos.err_notFound('Usuário não encontrado'); 
 
     const isUserActivate = userExists.isActive;
     if (!isUserActivate) throw throwlhos.err_badRequest(`Usuário ${userExists.name} está bloqueado.`);
 
-    const initialBalance = data.balance || 0;
+    const initialBalance = input.balance || 0;
 
     const accountCreated = await this.accountRepository.createOne({
       balance: this.toDecimal128(initialBalance),
-      type: data.type,
-      userId: new Types.ObjectId(data.userId),
+      type: input.type,
+      userId: new Types.ObjectId(input.userId),
       isActive: true
     });
 
@@ -94,18 +247,18 @@ export class AccountService {
     return this.sanitize(accountCreated);
   }
 
-  async findById(id: string): Promise<AccountResponseDTO> {
-    const account = await this.accountRepository.findById(id);
+  async findById(input: AccountService.FindById.Input): Promise<AccountService.FindById.Output> {
+    const account = await this.accountRepository.findById(input.id);
 
-    if(!account) throw throwlhos.err_notFound('Conta não encontrada', { id });
+    if(!account) throw throwlhos.err_notFound('Conta não encontrada', { id: input.id });
 
     return this.sanitize(account);
   }
-  async findAll (
-    page: number = 1,
-    limit: number = 10,
-    includeInactive: boolean = false
-  ) {
+  async findAll (input: AccountService.FindAll.Input): Promise<AccountService.FindAll.Output> {
+    const page = input.page || 1
+    const limit = input.limit || 10
+    const includeInactive = input.includeInactive || false
+    
     const $match: any = {};
     if (!includeInactive) {
       $match.isActive = true
@@ -115,73 +268,75 @@ export class AccountService {
       { $match },
       {
         $project: {
-          name: 1,
-          email: 1,
-          cpf: 1,
-          birthDate: 1,
-          active: 1,
+          accNumber: 1,
+          balance: 1,
+          type: 1,
+          userId: 1,
+          isActive: 1,
           createdAt: 1,
+          updatedAt: 1,
         },
       },
     ]
 
-    return await this.accountRepository.paginate(aggregate, {
+    const result = await this.accountRepository.paginate(aggregate, {
       paginate: { page, limit },
-    })
+    });
+
+    return {
+      docs: result.docs.map(doc => this.sanitize(doc)),
+      totalDocs: result.totalDocs ?? 0,
+      limit: result.limit ?? limit,
+      page: result.page ?? page,
+      totalPages: result.totalPages ?? 0,
+      hasNextPage: result.hasNextPage ?? false,
+      hasPrevPage: result.hasPrevPage ?? false,
+    };
   }
 
-  async findByUserId(
-    userId: string,
-    includeInactive: boolean = false
-  ): Promise<AccountResponseDTO[]> {
-    const query: any = { userId: new Types.ObjectId(userId) };
-    if (!includeInactive) query.isActive = true;
+  async findByUserId(input:AccountService.FindByUserId.Input): Promise<AccountService.FindByUserId.Output> {
+    const query: any = { userId: new Types.ObjectId(input.userId) };
+    if (!input.includeInactive) query.isActive = true;
 
     const accounts = await this.accountRepository.findMany(query);
     return accounts.map((a) => this.sanitize(a));    
   }
-  async update(
-    id: string,
-    data: Partial<Pick<IAccount,'balance' | 'type'>>
-  ): Promise<AccountResponseDTO> {
-    await this.findById(id);
 
-    const updatedAccount = await this.accountRepository.updateById(id, data);
+  async update(input: AccountService.Update.Input): Promise<AccountService.Update.Output> {
+    await this.findById({ id: input.id });
+
+    const updatedAccount = await this.accountRepository.updateById(input.id, input.data);
 
     return this.sanitize(updatedAccount!);
   }
 
   // operações financeiras
 
-  async deposit(
-    accountId: string,
-    amount: number,
-    description: string = 'Depósito'
-  ): Promise<{ account: AccountResponseDTO; transaction: any }> {
-
-    const account = await this.findById(accountId);
+  async deposit(input: AccountService.Deposit.Input): Promise<AccountService.Deposit.Output> {
+    const description = input.description || 'Depósito'
+    const account = await this.findById({id: input.accountId});
     if (!account.isActive) {
-      throw throwlhos.err_badRequest('Não é possível depositar em conta desativada', { accountId });
+      throw throwlhos.err_badRequest('Não é possível depositar em conta desativada', { accountId: input.accountId });
     }
 
     const currentBalance = this.parseBalance(account.balance);
-    const newBalance = currentBalance + amount;
+    const newBalance = currentBalance + input.amount;
 
-    const updatedAccount = await this.accountRepository.updateById(accountId, {
+    const updatedAccount = await this.accountRepository.updateById(input.accountId, {
       balance: this.toDecimal128(newBalance),
     });
 
     
     const transaction = await this.transactionService.create({
-      accountId,
+      accountId: input.accountId,
       type: 'deposit',
-      amount,
+      amount: input.amount,
       description,
       balanceBefore: currentBalance,
       balanceAfter: newBalance
     });
 
-    this.print.sucess(` Depósito realizado: R$ ${amount.toFixed(2)} na conta ${account.accNumber}`);
+    this.print.sucess(` Depósito realizado: R$ ${input.amount.toFixed(2)} na conta ${account.accNumber}`);
 
     return {
       account: this.sanitize(updatedAccount!),
@@ -189,40 +344,34 @@ export class AccountService {
     };
   }
 
-   async withdraw(
-    accountId: string,
-    amount: number,
-    description: string = 'Saque'
-  ): Promise<{ account: AccountResponseDTO; transaction: any }> {
-
-    await this.isAccountActive(accountId);
-    const account = await this.accountRepository.findById(accountId);
+   async withdraw(input: AccountService.Withdraw.Input): Promise<AccountService.Withdraw.Output> {
+    const description = input.description || 'Saque'
+    await this.isAccountActive(input.accountId);
+    const account = await this.accountRepository.findById(input.accountId);
 
     const currentBalance = this.parseBalance(account!.balance);
 
-    if (currentBalance < amount) {
+    if (currentBalance < input.amount) {
       throw throwlhos.err_badRequest('Saldo insuficiente', {
-        accountId,
+        accountId: input.accountId,
         currentBalance,
-        requestedAmount: amount,
+        requestedAmount: input.amount,
       });
     }
-    const newBalance = currentBalance - amount;
+    const newBalance = currentBalance - input.amount;
 
-    const updatedAccount = await this.accountRepository.updateById(accountId, {
+    const updatedAccount = await this.accountRepository.updateById(input.accountId, {
       balance: this.toDecimal128(newBalance),
     });
 
     const transaction = await this.transactionService.create({
-      accountId,
+      accountId: input.accountId,
       type: 'withdraw',
-      amount,
+      amount: input.amount,
       description,
       balanceBefore: currentBalance,
       balanceAfter: newBalance
     });
-
-    this.print.sucess(` Saque realizado: R$ ${amount.toFixed(2)} da conta ${account!.accNumber}`);
 
     return {
       account: this.sanitize(updatedAccount!),
@@ -230,44 +379,37 @@ export class AccountService {
     };
   }
 
-  async transfer(data: TransferDTO): Promise<{
-    fromAccount: AccountResponseDTO;
-    toAccount: AccountResponseDTO;
-    transactions: {
-      transferOut: any;
-      transferIn: any;
-    };
-  }> {
-    const { fromAccountId, toAccountId, amount, description = 'Transferência' } = data;
-
+  async transfer(input: AccountService.Transfer.Input): Promise<AccountService.Transfer.Output> {
+    const description = input.description || "Transferência"
+    
     const [fromAccount, toAccount] = await Promise.all([
-      this.accountRepository.findById(fromAccountId),
-      this.accountRepository.findById(toAccountId),
+      this.accountRepository.findById(input.fromAccountId),
+      this.accountRepository.findById(input.toAccountId),
     ]);
 
     if (!fromAccount) {
-      throw throwlhos.err_notFound('Conta de origem não encontrada', { fromAccountId });
+      throw throwlhos.err_notFound('Conta de origem não encontrada', { fromAccountId: input.fromAccountId });
     }
 
     if (!toAccount) {
-      throw throwlhos.err_notFound('Conta de destino não encontrada', { toAccountId });
+      throw throwlhos.err_notFound('Conta de destino não encontrada', { toAccountId: input.toAccountId });
     }
 
     await this.isAccountActive(fromAccount._id.toString());
     await this.isAccountActive(toAccount._id.toString());
 
     const fromBalance = this.parseBalance(fromAccount.balance);
-    if (fromBalance < amount) {
+    if (fromBalance < input.amount) {
       throw throwlhos.err_badRequest('Saldo insuficiente na conta de origem', {
-        fromAccountId,
+        fromAccountId: input.fromAccountId,
         currentBalance: fromBalance,
-        requestedAmount: amount,
+        requestedAmount: input.amount,
       });
     }
 
-    const newFromBalance = fromBalance - amount;
+    const newFromBalance = fromBalance - input.amount;
     const toBalance = this.parseBalance(toAccount.balance);
-    const newToBalance = toBalance + amount;
+    const newToBalance = toBalance + input.amount;
 
     let session: any = null;
     let updatedFromAccount;
@@ -280,7 +422,7 @@ export class AccountService {
       session.startTransaction();
       
       updatedFromAccount = await this.accountRepository.model.findByIdAndUpdate(
-        fromAccountId,
+        input.fromAccountId,
         { balance: this.toDecimal128(newFromBalance) },
         { new: true, session }
       );
@@ -290,7 +432,7 @@ export class AccountService {
       }
 
       updatedToAccount = await this.accountRepository.model.findByIdAndUpdate(
-        toAccountId,
+        input.toAccountId,
         { balance: this.toDecimal128(newToBalance) },
         { new: true, session }
       );
@@ -298,47 +440,36 @@ export class AccountService {
       if (!updatedToAccount) {
         throw new Error('Falha ao atualizar conta de destino');
       }
-
-      this.print.info('✅ Contas atualizadas');
       
       transferOutTransaction = await this.transactionService.create({
-        accountId: fromAccountId,
+        accountId: input.fromAccountId,
         type: 'transfer_out',
-        amount,
+        amount: input.amount,
         description: `${description} para conta ${toAccount.accNumber}`,
-        relatedAccountId: toAccountId,
+        relatedAccountId: input.toAccountId,
         balanceBefore: fromBalance,
         balanceAfter: newFromBalance,
         session,
       });
 
       transferInTransaction = await this.transactionService.create({
-        accountId: toAccountId,
+        accountId: input.toAccountId,
         type: 'transfer_in',
-        amount,
+        amount: input.amount,
         description: `${description} da conta ${fromAccount.accNumber}`,
-        relatedAccountId: fromAccountId,
+        relatedAccountId: input.fromAccountId,
         balanceBefore: toBalance,
         balanceAfter: newToBalance,
         session,
       });
-
-      this.print.info('✅ Transações registradas');
-
-      await session.commitTransaction();
-      this.print.sucess('Transação commitada com sucesso');
       
+      await session.commitTransaction();
     } catch (error) {
       await session.abortTransaction();
-      this.print.error('Erro na transferência, rollback executado:', error);
       throw error;
     } finally {
       await session.endSession();
     }
-
-    this.print.sucess(
-      ` Transferência realizada: R$ ${amount.toFixed(2)} de ${fromAccount.accNumber} para ${toAccount.accNumber}`
-    );
 
     return {
       fromAccount: this.sanitize(updatedFromAccount!),
@@ -350,19 +481,19 @@ export class AccountService {
     };
   }
 
-  async getBalance(accountId: string): Promise<number> {
-    const account = await this.accountRepository.findById(accountId);
+  async getBalance(input: AccountService.GetBalance.Input): Promise<AccountService.GetBalance.Output> {
+    const account = await this.accountRepository.findById(input.accountId);
 
     if (!account) {
-      throw throwlhos.err_notFound('Conta não encontrada', { accountId });
+      throw throwlhos.err_notFound('Conta não encontrada', { accountId: input.accountId });
     }
 
     return this.parseBalance(account.balance);
   }
 
-  async userHasBalance(userId: string): Promise<boolean> {
+  async userHasBalance(input: AccountService.UserHasBalance.Input): Promise<AccountService.UserHasBalance.Output> {
     const accounts = await this.accountRepository.findMany({
-      userId: new Types.ObjectId(userId),
+      userId: new Types.ObjectId(input.userId),
       isActive: true,
     });
 
@@ -372,15 +503,15 @@ export class AccountService {
 
     return totalBalance > 0;
   }
-  async getUserTotalBalance(userId: string): Promise<number> {
-    const user = await this.userService.findById(userId);
+  async getUserTotalBalance(input: AccountService.GetUserTotalBalance.Input): Promise<AccountService.GetUserTotalBalance.Output> {
+    const user = await this.userService.findById({id: input.userId});
   
     if (!user) {
-      throw throwlhos.err_notFound('Usuário não encontrado', { userId });
+      throw throwlhos.err_notFound('Usuário não encontrado', { userId: input.userId });
     }
     
     const accounts = await this.accountRepository.findMany({
-      userId: new Types.ObjectId(userId),
+      userId: new Types.ObjectId(input.userId),
       isActive: true,
     });
 
@@ -389,8 +520,9 @@ export class AccountService {
     }, 0);
   }
 
-  async deactivateAccount(accountId: string, force: boolean = false): Promise<void> {
-    const account = await this.findById(accountId);
+  async deactivate(input: AccountService.Deactivate.Input): Promise<AccountService.Deactivate.Output> {
+    const force = input.force || false
+    const account = await this.findById({id: input.accountId});
 
     await this.isAccountActive(account._id!.toString());
 
@@ -399,48 +531,39 @@ export class AccountService {
       if (balance > 0) {
         throw throwlhos.err_badRequest(
           'Não é possível desativar conta com saldo. Esvazie a conta primeiro ou use force=true',
-          { accountId, balance }
+          { accountId: input.accountId, balance }
         );
       }
     }
 
-    await this.accountRepository.updateById(accountId, { isActive: false });
+    await this.accountRepository.updateById(input.accountId, { isActive: false });
 
     this.print.sucess(` Conta ${account.accNumber} desativada`);
   }
 
-  async reactivateAccount(accountId: string): Promise<AccountResponseDTO> {
-    const account = await this.findById(accountId);
+  async reactivate(input: AccountService.Reactivate.Input): Promise<AccountService.Reactivate.Output> {
+    const account = await this.findById({id: input.accountId});
 
     if (account.isActive) {
-      throw throwlhos.err_badRequest('Conta já está ativa', { accountId });
+      throw throwlhos.err_badRequest('Conta já está ativa', { accountId: input.accountId });
     }
 
-    const user = await this.userService.findById(account.userId.toString());
+    const user = await this.userService.findById({id: account.userId.toString()});
     if (!user.isActive) {
       throw throwlhos.err_badRequest('Não é possível reativar conta de usuário desativado', {
-        accountId,
+        accountId: input.accountId,
         userId: user._id,
       });
     }
 
-    const reactivatedAccount = await this.accountRepository.updateById(accountId, { isActive: true });
+    const reactivatedAccount = await this.accountRepository.updateById(account._id, { isActive: true });
 
     this.print.sucess(`Conta ${account.accNumber} reativada`);
 
     return this.sanitize(reactivatedAccount!);
   }
 
-  async deactivateAllAccountsByUserId(userId: string): Promise<void> {
-    const result = await this.accountRepository.updateMany(
-      { userId: new Types.ObjectId(userId), isActive: true },
-      { isActive: false }
-    );
-
-    this.print.sucess(`${result.modifiedCount} contas do usuário ${userId} desativadas`);
-  }
-
-  private sanitize(account: any): AccountResponseDTO {
+  private sanitize(account: any): AccountService.TAccountSanitized {
     const accountObj = account.toObject ? account.toObject() : account;
 
     return {
@@ -456,7 +579,7 @@ export class AccountService {
   }
 
   private async isAccountActive(accountId: string): Promise<boolean> {
-    const account = await this.findById(accountId);
+    const account = await this.findById({id: accountId});
 
     if (!account.isActive) {
       throw throwlhos.err_badRequest('Não é possível sacar de conta desativada', { accountId });

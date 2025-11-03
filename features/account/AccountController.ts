@@ -61,11 +61,11 @@ export class AccountController {
 
   findAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page, limit } = req.pagination!
-
-      const includeInactive = req.query.includeInactive === 'true';
-
-      const result = await this.accountService.findAll(page, limit, includeInactive);
+      const result = await this.accountService.findAll({
+        page: req.pagination!.page,
+        limit: req.pagiation!.limit,
+        includeInactive: req.query.includeInactive === 'true'
+      });
 
       return res.send_ok('Lista de contas recuperada',result);
     } catch (error) {
@@ -75,10 +75,10 @@ export class AccountController {
 
   findByUserId = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId } = req.params;
-      const includeInactive = req.query.includeInactive === 'true';
-
-      const accounts = await this.accountService.findByUserId(userId, includeInactive);
+      const accounts = await this.accountService.findByUserId({
+        userId: req.params.userId,
+        includeInactive: req.query.includeInactive === 'true'
+      });
 
       return res.send_ok('Contas do usuário recuperadas', accounts);
     } catch (error) {
@@ -88,15 +88,17 @@ export class AccountController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
       const { type, balance } = req.body;
 
       if (type) this.accountRules.validate({ type, rule: 'type' });
       if (balance !== undefined) this.accountRules.validate({ balance });
 
-      const updatedAccount = await this.accountService.update(id, {
-        type,
-        balance,
+      const updatedAccount = await this.accountService.update({
+        id: req.params.id,
+        data: {
+          type: type,
+          balance: balance
+        }
       });
 
       return res.send_partialContent('Conta atualizada com sucesso', updatedAccount);
@@ -122,7 +124,11 @@ export class AccountController {
         this.print.info('[Account Controller] Depósito:', { accountId: id, amount });
       }
 
-      const updatedAccount = await this.accountService.deposit(id, amount, description);
+      const updatedAccount = await this.accountService.deposit({
+        accountId: id,
+        amount: amount,
+        description: description
+      });
 
       return res.send_ok('Depósito realizado com sucesso', updatedAccount);
     } catch (error) {
@@ -143,7 +149,11 @@ export class AccountController {
         this.print.info('[Account Controller] Saque:', { accountId: id, amount });
       }
 
-      const updatedAccount = await this.accountService.withdraw(id, amount, description);
+      const updatedAccount = await this.accountService.withdraw({
+        accountId: id,
+        amount: amount,
+        description: description
+      });
 
       return res.send_ok('Saque realizado com sucesso', updatedAccount);
     } catch (error) {
@@ -218,7 +228,10 @@ export class AccountController {
       const { id } = req.params;
       const force = req.query.force === 'true';
 
-      await this.accountService.deactivateAccount(id, force);
+      await this.accountService.deactivate({
+        accountId: id,
+        force: force
+      });
 
       return res.send_noContent('Conta desativada com sucesso', null);
     } catch (error) {
@@ -230,7 +243,7 @@ export class AccountController {
     try {
       const { id } = req.params;
 
-      const reactivatedAccount = await this.accountService.reactivateAccount(id);
+      const reactivatedAccount = await this.accountService.reactivate({accountId: id});
 
       return res.send_created('Conta reativada com sucesso.', reactivatedAccount);
     } catch (error) {

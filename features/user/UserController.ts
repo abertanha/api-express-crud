@@ -59,7 +59,7 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      const user = await this.userService.findById(id);
+      const user = await this.userService.findById({ id });
 
       return res.send_ok('Usuário encontrado', user);
 
@@ -70,11 +70,11 @@ export class UserController {
 
   findAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page, limit } = req.pagination!
-      
-      const includeInactive = req.query.includeInactive === 'true';
-
-      const result = await this.userService.findAll(page, limit, includeInactive);
+      const result = await this.userService.findAll({
+        page: req.pagination!.page,
+        limit: req.pagination!.limit,
+        includeInactive: req.query.includeInactive === 'true'
+      })
 
       return res.send_ok('Lista de usuários recuperada',result);
     } catch (error) {

@@ -3,6 +3,7 @@ import { Env } from '../../config/Env.ts';
 import { TransactionService } from './TransactonService.ts';
 import { TransactionRules } from './TransactionRules.ts'
 import { Print } from '../../utilities/Print.ts'
+import { TransactionType } from '../../models/Transaction/ITransaction.ts'
 
 export class TransactionController {
   private readonly transactionService: TransactionService;
@@ -54,11 +55,11 @@ export class TransactionController {
         this.print.info('Buscando transações:', { accountId, page, limit });
       }
 
-      const result = await this.transactionService.findByAccountId(
-        accountId.toString(),
+      const result = await this.transactionService.findByAccountId({
+        accountId,
         page,
         limit
-      );
+      });
 
       return res.send_ok('Transações recuperadas',result);
     } catch (error) {
@@ -80,10 +81,10 @@ export class TransactionController {
         this.print.info('Filtrando por tipo:', { accountId, type });
       }
 
-      const transactions = await this.transactionService.findByAccountAndType(
-        accountId,
-        type as any
-      );
+      const transactions = await this.transactionService.findByAccountAndType({
+        accountId: accountId,
+        type: type as TransactionType
+      });
 
       return res.send_ok('Transações filtradas por tipo', transactions);
     } catch (error) {
@@ -104,10 +105,10 @@ export class TransactionController {
         this.print.info('Buscando transferências:', { accountId1, accountId2 });
       };
 
-      const transactions = await this.transactionService.findBetweenAccounts(
+      const transactions = await this.transactionService.findBetweenAccounts({
         accountId1,
         accountId2
-      );
+      });
 
       return res.send_ok('Transferências entre contas recuperadas', transactions);
     } catch (error) {
@@ -125,7 +126,7 @@ export class TransactionController {
         this.print.info('Buscando estatísticas:', { accountId });
       }
 
-      const stats = await this.transactionService.getAccountStats(accountId);
+      const stats = await this.transactionService.getAccountStats({accountId});
 
       return res.send_ok('Estatísticas recuperadas',stats);
     } catch (error) {

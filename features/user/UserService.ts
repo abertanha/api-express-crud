@@ -1,30 +1,69 @@
-import { UserRepository } from '../../models/User/UserRepository.ts'
-import { throwlhos } from '../../globals/Throwlhos.ts'
-import { IUser } from '../../models/User/IUser.ts'
-import { AccountService } from '../../features/account/AccountService.ts'
+import { UserRepository } from '../../models/User/UserRepository.ts';
+import { throwlhos } from '../../globals/Throwlhos.ts';
+import { IUser } from '../../models/User/IUser.ts';
 import { randomBytes } from "node:crypto";
 import { Buffer } from "node:buffer";
-import { scryptSync } from 'node:crypto'
-import { Print } from '../../utilities/Print.ts'
+import { scryptSync } from 'node:crypto';
+import { Print } from '../../utilities/Print.ts';
+import { Types } from 'mongoose'
 
+export namespace UserService {
+  export type TUserSanitized = Omit<IUser, 'password'> & {
+    _id: Types.ObjectId | string
+  }
+  export namespace Create {
+    export type Input = {
+      name: string
+      email: string
+      password: string
+      cpf: string
+      birthDate: Date | string
+    }
 
-export interface CreateUserDTO {
-  name: string;
-  email: string;
-  password: string;
-  cpf: string;
-  birthDate: Date | string;
-}
+    export type Output = TUserSanitized
+  }
+  export namespace FindById {
+    export type Input = {
+      id: string
+      select?: string
+    }
 
-export interface UserResponseDTO {
-  _id?: string;
-  name: string;
-  email: string;
-  cpf: string;
-  birthDate: Date;
-  isActive?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+    export type Output = TUserSanitized
+  }
+  export namespace FindAll {
+    export type Input ={ 
+      page: number
+      limit: number
+      includeInactive?: boolean
+    }
+
+    export type Output = {
+      docs: TUserSanitized[]
+      totalDocs: number
+      limit: number
+      page: number
+      totalPages: number
+      hasNextPage: boolean
+      hasPrevPage: boolean
+    }
+  }
+
+  export namespace Update {
+    export type Input = { 
+      id: string
+      data: Partial<Pick<IUser, 'name' | 'email' | 'birthDate'>>
+    }
+
+    export type Output = TUserSanitized
+  }
+
+  export namespace Reactivate {
+    export type Input = {
+      id: string
+    }
+
+    export type Output = TUserSanitized
+  }
 }
 
 export class UserService {
@@ -39,7 +78,7 @@ export class UserService {
     this.print = print;
   }
 
-  async create(data: CreateUserDTO): Promise<UserResponseDTO>{
+  async create(data: UserService.Create.Input): Promise<UserService.Create.Output>{
     const emailExists = await this.userRepository.exists({ email: data.email })
     if (emailExists) throw throwlhos.err_conflict('Email já cadastrado', { email: data.email });
 
@@ -64,24 +103,22 @@ export class UserService {
     return this.sanitize(userCreated);
   }
 
-  async findById(id: string): Promise<UserResponseDTO> {
+  async findById(input: UserService.FindById.Input): Promise<UserService.FindById.Output> {
     const user = await this.userRepository
-      .findById(id)
-      .select('name email isActive')
+      .findById(input.id)
+      .select(input.select || 'name email isActive')
       .lean()
       .exec();
     
-    if(!user) throw throwlhos.err_notFound('Usuário não encontrado', { id });
+    if(!user) throw throwlhos.err_notFound('Usuário não encontrado', { id: input.id });
 
     return this.sanitize(user);
   }
   async findAll (
-    page: number,
-    limit: number,
-    includeInactive: boolean = false
+    input: UserService.FindAll.Input
   ) {
     const $match: any = {};
-    if (!includeInactive) {
+    if (!input.includeInactive) {
       $match.isActive = true
     }
 
@@ -100,25 +137,25 @@ export class UserService {
     ]
 
     return await this.userRepository.paginate(aggregate, {
-      paginate: { page, limit },
+      paginate: { page: input.page, limit: input.limit },
     })
   }
   async update(
-    id: string,
+    input: UserService.Update.Input,
     data: Partial<Pick<IUser, 'name' | 'email' | 'birthDate'>>
-  ): Promise<UserResponseDTO> {
-    const userExists = await this.userRepository.exists({ _id: id });
-    if (!userExists) throw throwlhos.err_notFound('Usuário não encontrando', { id });
+  ): Promise<UserService.Update.Output> {
+    const userExists = await this.userRepository.exists({ _id: input.id });
+    if (!userExists) throw throwlhos.err_notFound('Usuário não encontrando', { id: input.id });
 
     if (data.email) {
       const emailExists = await this.userRepository.findOne({
         email: data.email,
-        _id: { $ne: id}
+        _id: { $ne: input.id }
       });
-      if (emailExists) throw throwlhos.err_conflict('Email já cadastrado', { email: data.email });
+      if (emailExists) throw throwlhos.err_conflict('Email já cadastrado', { email: input.data.email });
     }
 
-    const updatedUser = await this.userRepository.updateById(id, data, {
+    const updatedUser = await this.userRepository.updateById(input.id, input.data, {
       select: '-password'
     });
 
@@ -157,25 +194,25 @@ export class UserService {
   //   await this.userRepository.updateById(id, { isActive: false });
   //   this.print.sucess(`Usuário ${user.name} (${id}) desativado com sucesso`);
   // }
-  async reactivate(id: string): Promise<UserResponseDTO> {
-    const user = await this.userRepository.findById(id, { select: '-password' });
+  async reactivate(input: UserService.Reactivate.Input): Promise<UserService.Reactivate.Output> {
+    const user = await this.userRepository.findById(input.id, { select: '-password' });
     if (!user) {
-      throw throwlhos.err_notFound('Usuário não encontrado', { id });
+      throw throwlhos.err_notFound('Usuário não encontrado', { id: input.id });
     }
 
     const reactivatedUser = await this.userRepository.updateById(
-      id, 
+      input.id, 
       { isActive: true },
       { select: '-password' }
     );
 
-    this.print.sucess(`Usuário ${user.name} (${id}) reativado com sucesso`);
+    this.print.sucess(`Usuário ${user.name} (${input.id}) reativado com sucesso`);
     this.print.info(`As contas do usuário permanecem desativadas e devem ser reativadas individualmente`);
 
     return this.sanitize(reactivatedUser!);
   }
     
-  private sanitize(user: any): UserResponseDTO {
+  private sanitize(user: any): UserService.TUserSanitized {
     const userObj = user.toObject ? user.toObject() : user;
 
     const { _password, ...sanitized } = userObj;

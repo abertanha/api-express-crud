@@ -5,31 +5,134 @@ import is from '@zarco/isness'
 import { ClientSession } from 'mongoose'
 import { Print } from '../../utilities/Print.ts'
 
-export interface CreateTransactionDTO {
-  accountId: string;
-  type: TransactionType;
-  amount: number;
-  description?: string;
-  balanceBefore?: number;
-  balanceAfter?: number;
-  relatedAccountId?: string;
-  relatedTransactionId?: string;
-  session?: ClientSession
+export namespace TransactionService {
+  export type TTransactionSanitized = {
+    _id?: string
+    accountId: string
+    type: TransactionType
+    amount: number
+    description?: string
+    balanceBefore: number
+    balanceAfter: number
+    relatedAccountId?: string
+    relatedTransactionId?: string
+    createdAt?: Date
+    updatedAt?: Date
+  }
+
+  export type TPaginatedTransactions = {
+    docs: TTransactionSanitized[]
+    totalDocs: number
+    limit: number
+    page: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPrevPage: boolean
+  }
+
+  export type TAccountStats = {
+    totalDeposits: number
+    totalWithdrawals: number
+    totalTransfersOut: number
+    totalTransfersIn: number
+    transactionCount: number
+  }
+
+  export namespace Create {
+    export type Input = {
+      accountId: string
+      type: TransactionType
+      amount: number
+      description?: string
+      balanceBefore?: number
+      balanceAfter?: number
+      relatedAccountId?: string
+      relatedTransactionId?: string
+      session?: ClientSession
+    }
+
+    export type Output = TTransactionSanitized
+  }
+
+  export namespace FindById {
+    export type Input = {
+      id: string
+    }
+
+    export type Output = TTransactionSanitized | null
+  }
+
+  export namespace FindByAccountId {
+    export type Input = {
+      accountId: string
+      page?: number
+      limit?: number
+    }
+
+    export type Output = TPaginatedTransactions
+  }
+
+  export namespace FindByAccountAndType {
+    export type Input = {
+      accountId: string
+      type: TransactionType
+    }
+
+    export type Output = TTransactionSanitized[]
+  }
+
+  export namespace FindBetweenAccounts {
+    export type Input = {
+      accountId1: string
+      accountId2: string
+    }
+
+    export type Output = TTransactionSanitized[]
+  }
+
+  export namespace GetTotalByType {
+    export type Input = {
+      accountId: string
+      type: TransactionType
+    }
+
+    export type Output = number
+  }
+
+  export namespace GetAccountStats {
+    export type Input = {
+      accountId: string
+    }
+
+    export type Output = TAccountStats
+  }
 }
 
-export interface TransactionResponseDTO {
-  _id?: string;
-  accountId: string;
-  type: TransactionType;
-  amount: number;
-  description?: string;
-  balanceBefore: number;
-  balanceAfter: number;
-  relatedAccountId?: string;
-  relatedTransactionId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+// export interface CreateTransactionDTO {
+//   accountId: string;
+//   type: TransactionType;
+//   amount: number;
+//   description?: string;
+//   balanceBefore?: number;
+//   balanceAfter?: number;
+//   relatedAccountId?: string;
+//   relatedTransactionId?: string;
+//   session?: ClientSession
+// }
+
+// export interface TransactionResponseDTO {
+//   _id?: string;
+//   accountId: string;
+//   type: TransactionType;
+//   amount: number;
+//   description?: string;
+//   balanceBefore: number;
+//   balanceAfter: number;
+//   relatedAccountId?: string;
+//   relatedTransactionId?: string;
+//   createdAt?: Date;
+//   updatedAt?: Date;
+// }
 
 export class TransactionService {
   private readonly transactionRepository: TransactionRepository;
@@ -43,52 +146,52 @@ export class TransactionService {
     this.transactionRepository = transactionRepository;
   }
 
-  async create(data: CreateTransactionDTO): Promise<TransactionResponseDTO> {
+  async create(input: TransactionService.Create.Input): Promise<TransactionService.Create.Output> {
     const transactionData = {
-      accountId: new Types.ObjectId(data.accountId),
-      type: data.type,
-      amount: this.toDecimal128(data.amount),
-      description: data.description,
-      balanceBefore: data.balanceBefore !== undefined
-        ? this.toDecimal128(data.balanceBefore)
+      accountId: new Types.ObjectId(input.accountId),
+      type: input.type,
+      amount: this.toDecimal128(input.amount),
+      description: input.description,
+      balanceBefore: input.balanceBefore !== undefined
+        ? this.toDecimal128(input.balanceBefore)
         : undefined,
-      balanceAfter: data.balanceAfter !== undefined 
-        ? this.toDecimal128(data.balanceAfter)
+      balanceAfter: input.balanceAfter !== undefined 
+        ? this.toDecimal128(input.balanceAfter)
         : undefined,
-      relatedAccountId: data.relatedAccountId 
-        ? new Types.ObjectId(data.relatedAccountId) 
+      relatedAccountId: input.relatedAccountId 
+        ? new Types.ObjectId(input.relatedAccountId) 
         : undefined,
-      relatedTransactionId: data.relatedTransactionId
-        ? new Types.ObjectId(data.relatedTransactionId)
+      relatedTransactionId: input.relatedTransactionId
+        ? new Types.ObjectId(input.relatedTransactionId)
         : undefined,
     };
 
-    const transaction = data.session
-      ? (await this.transactionRepository.model.create([transactionData],{ session: data.session }))[0]
+    const transaction = input.session
+      ? (await this.transactionRepository.model.create([transactionData],{ session: input.session }))[0]
       : await this.transactionRepository.model.create(transactionData);
 
     this.print.sucess(
-      `Transação registrada: ${data.type} - R$ ${data.amount.toFixed(2)}`
+      `Transação registrada: ${input.type} - R$ ${input.amount.toFixed(2)}`
     );
 
     return this.sanitize(transaction);
   }
 
-  async findById(id: string) {
-    return await this.transactionRepository
-    .findById(id)
+  async findById(input: TransactionService.FindById.Input): Promise<TransactionService.FindById.Output> {
+    const transaction = await this.transactionRepository
+    .findById(input.id)
     .lean()
     .exec()
+    
+    return this.sanitize(transaction)
   }
 
-  async findByAccountId(
-    accountId: string,
-    page: number = 1,
-    limit: number = 20
-  ) {
+  async findByAccountId(input: TransactionService.FindByAccountId.Input): Promise<TransactionService.FindByAccountId.Output> {
+    const page = input.page || 1
+    const limit = input.limit || 20
     const skip = (page - 1) * limit
   
-    const query = { accountId }
+    const query = { accountId: new Types.ObjectId(input.accountId) }
 
     const transactions = await this.transactionRepository
       .findMany(query)
@@ -101,7 +204,7 @@ export class TransactionService {
     const total = await this.transactionRepository.countDocuments(query)
 
     return {
-      docs: transactions,
+      docs: transactions.map(t => this.sanitize(t)),
       totalDocs: total,
       limit,
       page,
@@ -111,47 +214,38 @@ export class TransactionService {
     }
   }
 
-  async findByAccountAndType(
-    accountId: string,
-    type: TransactionType
-  ): Promise<TransactionResponseDTO[]> {
-    const transactions = await this.transactionRepository.findByAccountAndType(accountId, type);
+  async findByAccountAndType(input: TransactionService.FindByAccountAndType.Input): Promise<TransactionService.FindByAccountAndType.Output> {
+    const transactions = await this.transactionRepository.findByAccountAndType(
+      input.accountId,
+      input.type
+    )
 
     return transactions.map((t) => this.sanitize(t));
   }
 
-  async findBetweenAccounts(
-    accountId1: string,
-    accountId2: string
-  ): Promise<TransactionResponseDTO[]> {
+ async findBetweenAccounts(input: TransactionService.FindBetweenAccounts.Input): Promise<TransactionService.FindBetweenAccounts.Output> {
     const transactions = await this.transactionRepository.findTransfersBetweenAccounts(
-      accountId1,
-      accountId2
-    );
+      input.accountId1,
+      input.accountId2
+    )
 
-    return transactions.map((t) => this.sanitize(t));
+    return transactions.map((t) => this.sanitize(t))
   }
 
 
-  async getTotalByType(accountId: string, type: TransactionType): Promise<number> {
-    return await this.transactionRepository.getTotalByType(accountId, type);
+  async getTotalByType(input: TransactionService.GetTotalByType.Input): Promise<TransactionService.GetTotalByType.Output> {
+    return await this.transactionRepository.getTotalByType(input.accountId, input.type)
   }
 
-  async getAccountStats(accountId: string): Promise<{
-    totalDeposits: number;
-    totalWithdrawals: number;
-    totalTransfersOut: number;
-    totalTransfersIn: number;
-    transactionCount: number;
-  }> {
+  async getAccountStats(input: TransactionService.GetAccountStats.Input): Promise<TransactionService.GetAccountStats.Output> {
     const [totalDeposits, totalWithdrawals, totalTransfersOut, totalTransfersIn, transactionCount] =
       await Promise.all([
-        this.getTotalByType(accountId, 'deposit'),
-        this.getTotalByType(accountId, 'withdraw'),
-        this.getTotalByType(accountId, 'transfer_out'),
-        this.getTotalByType(accountId, 'transfer_in'),
-        this.transactionRepository.countDocuments({ accountId }),
-      ]);
+        this.getTotalByType({ accountId: input.accountId, type: 'deposit' }),
+        this.getTotalByType({ accountId: input.accountId, type: 'withdraw' }),
+        this.getTotalByType({ accountId: input.accountId, type: 'transfer_out' }),
+        this.getTotalByType({ accountId: input.accountId, type: 'transfer_in' }),
+        this.transactionRepository.countDocuments({ accountId: new Types.ObjectId(input.accountId) }),
+      ])
 
     return {
       totalDeposits,
@@ -159,11 +253,11 @@ export class TransactionService {
       totalTransfersOut,
       totalTransfersIn,
       transactionCount,
-    };
+    }
   }
 
-  private sanitize(transaction: any): TransactionResponseDTO {
-    const transactionObj = transaction.toObject ? transaction.toObject() : transaction;
+  private sanitize(transaction: any): TransactionService.TTransactionSanitized {
+    const transactionObj = transaction.toObject ? transaction.toObject() : transaction
 
     return {
       _id: transactionObj._id?.toString(),
@@ -177,15 +271,15 @@ export class TransactionService {
       relatedTransactionId: transactionObj.relatedTransactionId?.toString(),
       createdAt: transactionObj.createdAt,
       updatedAt: transactionObj.updatedAt,
-    };
+    }
   }
 
   private parseDecimal(value: any): number {
-    if (is.number(value)) return value;
+    if (is.number(value)) return value
     if (value && value.toString) {
-      return parseFloat(value.toString());
+      return parseFloat(value.toString())
     }
-    return 0;
+    return 0
   }
 
   private toDecimal128(value: number): Types.Decimal128 {
