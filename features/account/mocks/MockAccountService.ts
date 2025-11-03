@@ -23,7 +23,7 @@ export class MockTransactionService extends TransactionService {
 }
 
 export class MockPrint extends Print {
-  override sucess(_message: string) {}
+  override success(_message: string) {}
 
   override error(_message: string, _error?: any) {}
 }

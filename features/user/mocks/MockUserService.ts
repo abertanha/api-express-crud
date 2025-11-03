@@ -4,7 +4,7 @@ import { UserRepository } from '../../../models/User/UserRepository.ts'
 import { Print } from '../../../utilities/Print.ts'
 
 export class MockPrint extends Print {
-  override sucess(_message: string) {}
+  override success(_message: string) {}
   override error(_message: string, _error?: any) {}
   override info(_message: string, _data?: any) {}
 }

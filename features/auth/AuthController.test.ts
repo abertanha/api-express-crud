@@ -20,14 +20,6 @@ function setupTest() {
   return { authController };
 }
 
-let cleanupRegistered = false;
-if (!cleanupRegistered) {
-  cleanupRegistered = true;
-  globalThis.addEventListener("unload", async () => {
-    await Database.closeAllConnections();
-  });
-}
-
 // LOGIN
 Deno.test({
   name:'AuthController - login - deve realizar login com sucesso (teste positivo)',

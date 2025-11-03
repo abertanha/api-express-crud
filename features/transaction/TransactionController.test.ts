@@ -21,14 +21,6 @@ function setupTest() {
   return { transactionController, mockTransactionService, mockTransactionRules, mockPrint };
 }
 
-let cleanupRegistered = false;
-if (!cleanupRegistered) {
-  cleanupRegistered = true;
-  globalThis.addEventListener("unload", async () => {
-    await Database.closeAllConnections();
-  });
-}
-
 // ===== FIND BY ID =====
 Deno.test({
   name: "TransactionController - findById - sucesso",

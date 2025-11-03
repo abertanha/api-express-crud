@@ -21,14 +21,6 @@ function setupTest() {
   return { accountController };
 }
 
-let cleanupRegistered = false;
-if (!cleanupRegistered) {
-  cleanupRegistered = true;
-  globalThis.addEventListener("unload", async () => {
-    await Database.closeAllConnections();
-  });
-}
-
 // CREATE
 Deno.test({
   name:'AccountController - create - deve criar conta com sucesso (teste positivo)',

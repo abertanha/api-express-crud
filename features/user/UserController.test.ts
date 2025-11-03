@@ -26,14 +26,6 @@ function setupTest() {
   return { userController, mockUserService, mockUserRules, mockPrint };
 }
 
-let cleanupRegistered = false;
-if (!cleanupRegistered) {
-  cleanupRegistered = true;
-  globalThis.addEventListener("unload", async () => {
-    await Database.closeAllConnections();
-  });
-}
-
 // CREATE TESTS
 Deno.test({
   name:'UserController - create - deve criar um usuário com sucesso (teste positivo)',
