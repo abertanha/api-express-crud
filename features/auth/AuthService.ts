@@ -6,6 +6,7 @@ import { Buffer } from "node:buffer";
 import jwt from 'npm:jsonwebtoken';
 import { Env } from '../../config/Env.ts';
 import { TokenPayload } from '../../middlewares/AuthMiddleware.ts'
+import { IUser } from '../../models/User/IUser.ts'
 
 export namespace AuthService {
   export type TTokenPayload = {
@@ -108,7 +109,7 @@ export class AuthService {
     const refreshToken = await this.refreshTokenRepository.createOne({
       userId: user._id!,
       expiration: expirationDate,
-      lastActivityAt: new Date(),
+      lastActivityAt: new Date(), // dificilmente usar o new date nativo, use locale e lib de controle de tempo.
     });
 
     const tokenPayload: TokenPayload = {
@@ -189,11 +190,12 @@ export class AuthService {
   async getUserById(params: AuthService.GetUserById.Input): Promise<AuthService.GetUserById.Output> {
     const { userId } = params.input
 
-    const user = await this.userRepository
+    const user: Pick<IUser, "name" | "email" | "cpf" | "birthDate" | "isActive"> | null = await this.userRepository
       .findById(userId)
-      .select('name email cpf birthDate isActive')
+      .select(['name', 'email', 'cpf', 'birthDate','isActive']) // array de strings
       .lean()
-      .exec();
+      .exec()
+
 
     if (!user) {
       throw throwlhos.err_notFound('Usuário não encontrado', { userId });

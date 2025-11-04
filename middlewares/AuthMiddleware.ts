@@ -9,7 +9,7 @@ import { Env } from '../config/Env.ts'
 const print = new Print();
 
 export interface TokenPayload {
-  id: string
+  id: string  //nunca pode ser string, sempre Types.ObjectId
   email: string
   name: string
   refreshTokenId: string

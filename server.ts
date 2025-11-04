@@ -25,17 +25,6 @@ const server = async () => {
       const devEnv = new DevelopmentEnvironment();
       devEnv.run();
     }
-    
-    const shutdown = async () => {
-      print.info('\nGraceful shutdown initiated...');
-      await Database.closeAllConnections();
-      print.success('Shutdown complete.');
-      Deno.exit(0);
-    }
-
-    Deno.addSignalListener('SIGINT', shutdown);
-    Deno.addSignalListener('SIGTERM', shutdown);
-
   } catch (error) {
     print.error('Failed to start server:');
     print.error(error as unknown as string);

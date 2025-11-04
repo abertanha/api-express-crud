@@ -107,7 +107,7 @@ export class AccountController {
         }
       });
 
-      return res.send_partialContent('Conta atualizada com sucesso', updatedAccount);
+      return res.send_ok('Conta atualizada com sucesso', updatedAccount);
     } catch (error) {
       next(error);
     }
@@ -249,7 +249,7 @@ export class AccountController {
         force: force
       });
 
-      return res.send_noContent('Conta desativada com sucesso', null);
+      return res.send_ok('Conta desativada com sucesso', null);
     } catch (error) {
       next(error);
     }

@@ -356,7 +356,7 @@ Deno.test('UserController - update - deve atualizar um usuário com sucesso (tes
 
   await userController.update(mockRequest, MockResponser, MockNextFunction);
 
-  const response = MockResponser.send_partialContent as any;
+  const response = MockResponser.send_ as any;
   assertExists(response);
 });
 
@@ -374,7 +374,7 @@ Deno.test('UserController - update - deve atualizar apenas o nome do usuário (t
 
   await userController.update(mockRequest, MockResponser, MockNextFunction);
 
-  const response = MockResponser.send_partialContent as any;
+  const response = MockResponser.send_ok as any;
   assertExists(response);
 });
 
@@ -392,7 +392,7 @@ Deno.test('UserController - update - deve atualizar apenas o email do usuário (
 
   await userController.update(mockRequest, MockResponser, MockNextFunction);
 
-  const response = MockResponser.send_partialContent as any;
+  const response = MockResponser.send_ok as any;
   assertExists(response);
 });
 
@@ -410,7 +410,7 @@ Deno.test('UserController - update - deve atualizar a data de nascimento do usu�
 
   await userController.update(mockRequest, MockResponser, MockNextFunction);
 
-  const response = MockResponser.send_partialContent as any;
+  const response = MockResponser.send_ok as any;
   assertExists(response);
 });
 
@@ -517,7 +517,7 @@ Deno.test('UserController - deactivate - deve desativar um usuário com sucesso 
 
   await userController.deactivate(mockRequest, MockResponser, MockNextFunction);
 
-  const response = MockResponser.send_noContent as any;
+  const response = MockResponser.send_ok as any;
   assertExists(response);
 });
 
@@ -535,7 +535,7 @@ Deno.test('UserController - deactivate - deve desativar um usuário com force=tr
 
   await userController.deactivate(mockRequest, MockResponser, MockNextFunction);
 
-  const response = MockResponser.send_noContent as any;
+  const response = MockResponser.send_ok as any;
   assertExists(response);
 });
 

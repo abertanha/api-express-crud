@@ -111,7 +111,7 @@ Deno.test('AccountController - update - deve atualizar tipo da conta (teste posi
   const { accountController } = setupTest();
   const mockRequest = { params: { id: '607f1f77bcf86cd799439021' }, body: { type: 'poupança' } } as any as Request;
   await accountController.update(mockRequest, MockResponser, MockNextFunction);
-  assertExists(MockResponser.send_partialContent);
+  assertExists(MockResponser.send_ok);
 });
 
 Deno.test('AccountController - update - deve falhar com conta não encontrada (teste negativo)', async () => {
@@ -255,14 +255,14 @@ Deno.test('AccountController - deactivate - deve desativar conta com saldo zero 
   const { accountController } = setupTest();
   const mockRequest = { params: { id: '607f1f77bcf86cd799439023' }, query: {} } as any as Request;
   await accountController.deactivate(mockRequest, MockResponser, MockNextFunction);
-  assertExists(MockResponser.send_noContent);
+  assertExists(MockResponser.send_ok);
 });
 
 Deno.test('AccountController - deactivate - deve desativar conta com force (teste positivo)', async () => {
   const { accountController } = setupTest();
   const mockRequest = { params: { id: '607f1f77bcf86cd799439021' }, query: { force: 'true' } } as any as Request;
   await accountController.deactivate(mockRequest, MockResponser, MockNextFunction);
-  assertExists(MockResponser.send_noContent);
+  assertExists(MockResponser.send_ok);
 });
 
 Deno.test('AccountController - deactivate - deve falhar com saldo sem force (teste negativo)', async () => {
