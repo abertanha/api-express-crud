@@ -5,6 +5,7 @@ import { UserRepository } from '../models/User/UserRepository.ts'
 import { Print } from '../utilities/Print.ts'
 import jwt from 'npm:jsonwebtoken'
 import { Env } from '../config/Env.ts'
+import { Time } from '../utilities/Time.ts'
 
 const print = new Print();
 
@@ -87,7 +88,7 @@ export const AuthMiddleware = async (
 
           await refreshTokenRepository.updateById(
             tokenPayload.refreshTokenId,
-            { lastActivityAt: new Date() },
+            { lastActivityAt: Time.now().toDate() },
           )
 
           if (Env.local) {

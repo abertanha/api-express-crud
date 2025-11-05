@@ -6,6 +6,7 @@ import { Print } from '../../../utilities/Print.ts';
 import { UserService } from '../../user/UserService.ts';
 import { MockUserRepository } from '../../user/mocks/MockUserRepository.ts';
 import { UserRepository } from '../../../models/User/UserRepository.ts';
+import { Time } from '../../../utilities/Time.ts'
 
 export class MockTransactionService extends TransactionService {
   override create(_data: any): Promise<any> {
@@ -17,7 +18,7 @@ export class MockTransactionService extends TransactionService {
       description: _data.description,
       balanceBefore: _data.balanceBefore,
       balanceAfter: _data.balanceAfter,
-      createdAt: new Date(),
+      createdAt: Time.now().toDate(),
     });
   }
 }

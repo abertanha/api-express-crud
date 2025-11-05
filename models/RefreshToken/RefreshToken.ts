@@ -1,6 +1,7 @@
 import { IRefreshToken } from './IRefreshToken.ts'
 import { BaseSchema } from '../../base/BaseSchema.ts'
 import { Schema } from 'mongoose'
+import { Time } from '../../utilities/Time.ts'
 
 export const RefreshTokenRefs = [];
 
@@ -16,7 +17,7 @@ export class RefreshToken implements IRefreshToken {
   }
 
   get hasExpired(): boolean {
-    return new Date() > this.expiration;
+    return Time.now().toDate() > this.expiration;
   }
 }
 
@@ -46,7 +47,7 @@ const RefreshTokenSchema = new RefreshTokenSchemaClass().schema
 RefreshTokenSchema.loadClass(RefreshToken);
 
 RefreshTokenSchema.virtual('hasExpired').get(function(this: IRefreshToken) {
-  return new Date() > this.expiration
+  return Time.now().toDate() > this.expiration
 })
 
 export { RefreshTokenSchema }

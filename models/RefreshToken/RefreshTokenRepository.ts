@@ -3,6 +3,7 @@ import { BaseRepository } from '../../base/BaseRepository.ts'
 import { BankingDB } from '../../database/db/bankingDB.ts'
 import { IRefreshToken } from './IRefreshToken.ts'
 import { RefreshTokenRefs, RefreshTokenSchema } from './RefreshToken.ts'
+import { Time } from '../../utilities/Time.ts'
 
 class RefreshTokenRepository extends BaseRepository<IRefreshToken> {
   constructor(
@@ -16,7 +17,7 @@ class RefreshTokenRepository extends BaseRepository<IRefreshToken> {
 
   async deleteExpiredTokens() {
     return await this.model.deleteMany({
-      expiration: { $lt: new Date() }
+      expiration: { $lt: Time.now().toDate() }
     });
   }
   async deleteUserTokens(userId: string) {

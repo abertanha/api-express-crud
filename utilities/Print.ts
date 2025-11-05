@@ -1,3 +1,4 @@
+import { Time } from './Time.ts'
 
 export class Print {
   private fileIdentificator: string;
@@ -11,7 +12,7 @@ export class Print {
   }
 
   private getTimestamp(): string {
-    return new Date().toISOString();
+    return Time.now().toDate().toISOString();
   }
 
   private logWithColor(message: string, color: 'green' | 'red' | 'blue' | 'yellow'): void {

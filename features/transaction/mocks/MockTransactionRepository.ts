@@ -1,6 +1,7 @@
 import type { ITransaction } from "../../../models/Transaction/ITransaction.ts";
 import type { FilterQuery, QueryOptions, UpdateQuery } from "mongoose";
 import { Types } from "mongoose";
+import { Time } from '../../../utilities/Time.ts'
 
 interface MockTransaction extends ITransaction {
   toObject?: () => ITransaction;
@@ -80,8 +81,8 @@ export class MockTransactionRepository {
         const created = data.map(d => ({
           _id: new Types.ObjectId(),
           ...d,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: Time.now().toDate(),
+          updatedAt: Time.now().toDate(),
           toObject: function() { return { ...this }; }
         }));
         this.mockData.push(...created);
@@ -92,8 +93,8 @@ export class MockTransactionRepository {
       const created = {
         _id: new Types.ObjectId(),
         ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Time.now().toDate(),
+        updatedAt: Time.now().toDate(),
         toObject: function() { return { ...this }; }
       };
       this.mockData.push(created);

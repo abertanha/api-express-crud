@@ -1,5 +1,7 @@
+import { Time } from './Time.ts'
+
 export default function isValidBirthDate(birthDate: Date | string): boolean {
-    const hoje = new Date();
+    const hoje = Time.now().toDate();
     const nascimento = birthDate instanceof Date ? birthDate : new Date(birthDate);
 
     if (isNaN(nascimento.getTime())) {

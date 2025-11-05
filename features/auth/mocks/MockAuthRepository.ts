@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { IRefreshToken } from '../../../models/RefreshToken/IRefreshToken.ts';
 import { FilterQuery, QueryOptions, UpdateQuery } from 'mongoose';
+import { Time } from '../../../utilities/Time.ts'
 
 export class MockAuthRepository {
   public mockData: Array<Partial<IRefreshToken> & { _id: Types.ObjectId }> = [
@@ -8,21 +9,21 @@ export class MockAuthRepository {
       _id: new Types.ObjectId('608f1f77bcf86cd799439011'),
       userId: new Types.ObjectId('507f1f77bcf86cd799439011'),
       expiration: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      lastActivityAt: new Date(),
+      lastActivityAt: Time.now().toDate(),
       hasExpired: false,
     },
     {
       _id: new Types.ObjectId('608f1f77bcf86cd799439012'),
       userId: new Types.ObjectId('507f1f77bcf86cd799439012'),
-      expiration: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-      lastActivityAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      expiration: Time.now().add((15 * 24 * 60 * 60 * 1000), 'ms').toDate(),
+      lastActivityAt: Time.now().subtract((2 * 24 * 60 * 60 * 1000), 'ms').toDate(),
       hasExpired: false,
     },
     {
       _id: new Types.ObjectId('608f1f77bcf86cd799439013'),
       userId: new Types.ObjectId('507f1f77bcf86cd799439013'),
-      expiration: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      lastActivityAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      expiration: Time.now().subtract((5 * 24 * 60 * 60 * 1000), 'ms').toDate(),
+      lastActivityAt: Time.now().subtract((10 * 24 * 60 * 60 * 1000), 'ms').toDate(),
       hasExpired: true,
     },
   ];
@@ -282,7 +283,7 @@ export class MockAuthRepository {
   deleteExpiredTokens(): Promise<{ deletedCount: number }> {
     const initialLength = this.mockData.length;
     this.mockData = this.mockData.filter((token) => {
-      const now = new Date();
+      const now = Time.now().toDate();
       return token.expiration && token.expiration > now;
     });
     const deletedCount = initialLength - this.mockData.length;
@@ -323,7 +324,7 @@ export class MockAuthRepository {
         _id: new Types.ObjectId('608f1f77bcf86cd799439011'),
         userId: new Types.ObjectId('507f1f77bcf86cd799439011'),
         expiration: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        lastActivityAt: new Date(),
+        lastActivityAt: Time.now().toDate(),
         hasExpired: false,
       },
       {

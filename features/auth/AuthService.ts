@@ -6,6 +6,7 @@ import { Buffer } from "node:buffer";
 import jwt from 'npm:jsonwebtoken';
 import { Env } from '../../config/Env.ts';
 import { TokenPayload } from '../../middlewares/AuthMiddleware.ts'
+import { Time } from '../../utilities/Time.ts'
 
 export namespace AuthService {
   export type TTokenPayload = {
@@ -102,13 +103,13 @@ export class AuthService {
     
     if(!isPasswordValid) throw throwlhos.err_unauthorized('Email ou senha incorretos')
     
-    const expirationDate = new Date()
+    const expirationDate = Time.now().toDate()
     expirationDate.setDate(expirationDate.getDate() + Env.refreshTokenDays)
 
     const refreshToken = await this.refreshTokenRepository.createOne({
       userId: user._id!,
       expiration: expirationDate,
-      lastActivityAt: new Date(),
+      lastActivityAt: Time.now().toDate(),
     });
 
     const tokenPayload: TokenPayload = {
@@ -161,7 +162,7 @@ export class AuthService {
     if(!user) throw throwlhos.err_unauthorized('Usuário não encontrado')
 
     await this.refreshTokenRepository.updateById(refreshTokenId, {
-      lastActivityAt: new Date(),
+      lastActivityAt: Time.now().toDate(),
     })
 
     const tokenPayload: TokenPayload = {

@@ -3,6 +3,7 @@ import { MockAuthRepository } from './MockAuthRepository.ts';
 import { RefreshTokenRepository } from '../../../models/RefreshToken/RefreshTokenRepository.ts';
 import { MockUserRepository } from '../../user/mocks/MockUserRepository.ts';
 import { UserRepository } from '../../../models/User/UserRepository.ts';
+import { Time } from '../../../utilities/Time.ts'
 
 export class MockAuthService extends AuthService {
   constructor() {
@@ -22,8 +23,8 @@ export class MockAuthService extends AuthService {
 
     const refreshToken = await (this as any).refreshTokenRepository.createOne({
       userId: user._id,
-      expiration: new Date(Date.now() + 1000 * 60 * 60 * 24),
-      lastActivityAt: new Date(),
+      expiration: Time.now().add((1000 * 60 * 60 * 24), 'ms').toDate(),
+      lastActivityAt: Time.now().toDate(),
     });
 
     return {
@@ -56,7 +57,7 @@ export class MockAuthService extends AuthService {
     const user = await (this as any).userRepository.findById(refresh.userId.toString()).exec();
     if (!user) throw { code: 401, status: 'UNAUTHORIZED', message: 'Usuário não encontrado' };
 
-    await (this as any).refreshTokenRepository.updateById(refreshTokenId, { lastActivityAt: new Date() });
+    await (this as any).refreshTokenRepository.updateById(refreshTokenId, { lastActivityAt: Time.now().toDate() });
 
     return { token: 'mock-jwt-token-refreshed', expiresIn: '1h' };
   }
