@@ -350,112 +350,145 @@ export class AccountService {
 
   async transfer(params: AccountService.Transfer.Input): Promise<AccountService.Transfer.Output> {
     const { input, options } = params
-    const isExternalTransaction = !!options?.bankingSession
     
-    const session = isExternalTransaction
-      ? options.bankingSession!
-      : await startBankingSession()
-
+    const session = options?.bankingSession ?? await startBankingSession()
+    const isExternalTransaction = Boolean(options?.bankingSession)  // evitar dupla negacao ao em vez, usar a classe Boolean
+    
     const description = input.description || "Transferência"
     
-    const [fromAccount, toAccount] = await Promise.all([
-      this.accountRepository.findById( input.fromAccountId),
-      this.accountRepository.findById(input.toAccountId),
-    ]);
+    // helpers para manter esse método uma função_pura
+    // validação de conta
+    const getAccounts = async () => {
+      const [fromAccount, toAccount] = await Promise.all([
+        this.accountRepository.findById(input.fromAccountId),
+        this.accountRepository.findById(input.toAccountId),
+      ]);
 
-    if (!fromAccount) {
-      throw throwlhos.err_notFound('Conta de origem não encontrada', { fromAccountId: input.fromAccountId });
-    }
+      await Promise.all([
+        this.isAccountActive(fromAccount!._id.toString()),
+        this.isAccountActive(toAccount!._id.toString())
+      ]);
 
-    if (!toAccount) {
-      throw throwlhos.err_notFound('Conta de destino não encontrada', { toAccountId: input.toAccountId });
-    }
+      return { fromAccount: fromAccount, toAccount: toAccount };
+    };
+    // validação de saldo para transferência
+    const validateAndCalculateBalances = (fromAccount: any, toAccount: any) => {
+      const fromBalance = this.parseBalance(fromAccount.balance);
+      const toBalance = this.parseBalance(toAccount.balance);
+      
+      if (fromBalance < input.amount) {
+        throw throwlhos.err_badRequest('Saldo insuficiente na conta de origem', {
+          fromAccountId: input.fromAccountId,
+          currentBalance: fromBalance,
+          requestedAmount: input.amount,
+        });
+      }
 
-    await this.isAccountActive(fromAccount._id.toString());
-    await this.isAccountActive(toAccount._id.toString());
-
-    const fromBalance = this.parseBalance(fromAccount.balance);
-    if (fromBalance < input.amount) {
-      throw throwlhos.err_badRequest('Saldo insuficiente na conta de origem', {
-        fromAccountId: input.fromAccountId,
-        currentBalance: fromBalance,
-        requestedAmount: input.amount,
-      });
-    }
-
-    const newFromBalance = fromBalance - input.amount;
-    const toBalance = this.parseBalance(toAccount.balance);
-    const newToBalance = toBalance + input.amount;
-
-    let updatedFromAccount;
-    let updatedToAccount;
-    let transferOutTransaction;
-    let transferInTransaction;
-    
-    try {
-      // atualiza conta de origem
-      updatedFromAccount = await this.accountRepository.model.findByIdAndUpdate(
-        input.fromAccountId,
-        { balance: this.toDecimal128(newFromBalance) },
-        { new: true, session }
-      );
+      return {
+        fromBalance,
+        toBalance,
+        newFromBalance: fromBalance - input.amount,
+        newToBalance: toBalance + input.amount,
+      };
+    };
+    // helper para atualizar saldo das contas
+    const updateAccountBalances = async (balances: any) => {
+      const updatedFromAccount = await this.accountRepository.model.findByIdAndUpdate(
+          input.fromAccountId,
+          { balance: this.toDecimal128(balances.newFromBalance) },
+          { new: true, session }
+      )
 
       if (!updatedFromAccount) {
-        throw new Error('Falha ao atualizar conta de origem');
+        throw throwlhos.err_badRequest('Falha ao atualizar conta de origem');
       }
-      // atualiza a conta de destino
-      updatedToAccount = await this.accountRepository.model.findByIdAndUpdate(
-        input.toAccountId,
-        { balance: this.toDecimal128(newToBalance) },
-        { new: true, session }
-      );
 
-      if (!updatedToAccount) {
-        throw new Error('Falha ao atualizar conta de destino');
-      }
+      const updatedToAccount = await this.accountRepository.model.findByIdAndUpdate(
+        input.toAccountId,
+        { balance: this.toDecimal128(balances.newToBalance)},
+        { new: true, session }
+      )
       
-      transferOutTransaction = await this.transactionService.create({
+      if (!updatedFromAccount) {
+        throw throwlhos.err_badRequest('Falha ao atualizar conta de destino');
+      }
+
+      return { updatedFromAccount, updatedToAccount };
+    };
+    
+    //helpe para registrar as transferências
+    const createTransactionRecords = async (
+      fromAccount: any, 
+      toAccount: any, 
+      balances: any
+    ) => {
+      const transferOutTransaction = await this.transactionService.create({
         accountId: input.fromAccountId,
         type: 'transfer_out',
         amount: input.amount,
         description: `${description} para conta ${toAccount.accNumber}`,
         relatedAccountId: input.toAccountId,
-        balanceBefore: fromBalance,
-        balanceAfter: newFromBalance,
+        balanceBefore: balances.fromBalance,
+        balanceAfter: balances.newFromBalance,
         session,
       });
 
-      transferInTransaction = await this.transactionService.create({
+      const transferInTransaction = await this.transactionService.create({
         accountId: input.toAccountId,
         type: 'transfer_in',
         amount: input.amount,
         description: `${description} da conta ${fromAccount.accNumber}`,
         relatedAccountId: input.fromAccountId,
-        balanceBefore: toBalance,
-        balanceAfter: newToBalance,
+        balanceBefore: balances.toBalance,
+        balanceAfter: balances.newToBalance,
         session,
       });
+
+      return { transferOutTransaction, transferInTransaction };
+    };
+
+    // helper para as ops dentro da transação
+    const executeTransfer = async (fromAccount: any, toAccount: any, balances: any) => {
+      const accounts = await updateAccountBalances(balances);
+      const transactions = await createTransactionRecords(fromAccount, toAccount, balances);
       
-      if (!isExternalTransaction) {
-        await session.commitTransaction();
+      return { ...accounts, ...transactions };
+    };
+
+    // helper para gerenciar o clico de sessão ACID
+    const withSession = async (operation: () => Promise<any>) => {
+      try {
+        const result = await operation();
+        
+        if (!isExternalTransaction) {
+          await session.commitTransaction();
+        }
+        
+        return result;
+      } catch (error) {
+        if (!isExternalTransaction) {
+          await session.abortTransaction();
+        }
+        throw error;
+      } finally {
+        if (!isExternalTransaction) {
+          await session.endSession();
+        }
       }
-    } catch (error) {
-      if (!isExternalTransaction) {
-        await session.abortTransaction();
-      }
-      throw error;
-    } finally {
-      if (!isExternalTransaction) {
-        await session.endSession();
-      }
-    }
+    };
+    // fluxo principal
+    const { fromAccount, toAccount } = await getAccounts(); // Pega as contas e valida
+    const balances = validateAndCalculateBalances(fromAccount, toAccount); //Valida saldo e valor
+    const result = await withSession(() =>
+      executeTransfer(fromAccount, toAccount, balances)   //executa e faz gestão da sessão
+    )
 
     return {
-      fromAccount: this.sanitize(updatedFromAccount!),
-      toAccount: this.sanitize(updatedToAccount!),
+      fromAccount: this.sanitize(result.updatedFromAccount!),
+      toAccount: this.sanitize(result.updatedToAccount!),
       transactions: {
-        transferOut: transferOutTransaction,
-        transferIn: transferInTransaction,
+        transferOut: result.transferOutTransaction,
+        transferIn: result.transferInTransaction,
       },
     };
   }

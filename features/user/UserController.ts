@@ -110,7 +110,7 @@ export class UserController {
         }
       });
 
-      return res.send_partialContent('Usuário atualizado com sucesso', updatedUser);
+      return res.send_ok('Usuário atualizado com sucesso', updatedUser);
     } catch (error) {
       next(error);
     }
@@ -124,7 +124,7 @@ export class UserController {
 
       await this.softDeleteService.deactivate(id, force);
 
-      return res.send_noContent('Usuário desativado com sucesso',null);
+      return res.send_ok('Usuário desativado com sucesso',null);
 
     } catch (error) {
       next(error);

@@ -6,6 +6,7 @@ import { Buffer } from "node:buffer";
 import jwt from 'npm:jsonwebtoken';
 import { Env } from '../../config/Env.ts';
 import { TokenPayload } from '../../middlewares/AuthMiddleware.ts'
+import { IUser } from '../../models/User/IUser.ts'
 import { Time } from '../../utilities/Time.ts'
 
 export namespace AuthService {
@@ -190,11 +191,12 @@ export class AuthService {
   async getUserById(params: AuthService.GetUserById.Input): Promise<AuthService.GetUserById.Output> {
     const { userId } = params.input
 
-    const user = await this.userRepository
+    const user: Pick<IUser, "name" | "email" | "cpf" | "birthDate" | "isActive"> | null = await this.userRepository
       .findById(userId)
-      .select('name email cpf birthDate isActive')
+      .select(['name', 'email', 'cpf', 'birthDate','isActive']) // array de strings
       .lean()
-      .exec();
+      .exec()
+
 
     if (!user) {
       throw throwlhos.err_notFound('Usuário não encontrado', { userId });

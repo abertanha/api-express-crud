@@ -233,8 +233,8 @@ UserRouter.patch(
  */
 UserRouter.patch(
   '/api/users/:id/reactivate',
-  AuthMiddleware,
-  OwnershipMiddleware.user(),
+  // AuthMiddleware,
+  // OwnershipMiddleware.user(),
   userController.reactivate
 );
 
